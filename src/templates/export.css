@@ -1,0 +1,360 @@
+/* UltraFast MCP Sequential Thinking Export Styles */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f8f9fa;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    background-color: white;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    min-height: 100vh;
+}
+
+h1 {
+    color: #2c3e50;
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    text-align: center;
+    border-bottom: 3px solid #3498db;
+    padding-bottom: 1rem;
+}
+
+h2 {
+    color: #34495e;
+    font-size: 1.8rem;
+    margin: 2rem 0 1rem 0;
+    border-left: 4px solid #3498db;
+    padding-left: 1rem;
+}
+
+h3 {
+    color: #2c3e50;
+    font-size: 1.3rem;
+    margin: 1.5rem 0 0.5rem 0;
+}
+
+.session-info {
+    background-color: #ecf0f1;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    border-left: 4px solid #3498db;
+}
+
+.session-info p {
+    margin-bottom: 0.5rem;
+}
+
+.session-info strong {
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.thoughts {
+    margin-top: 2rem;
+}
+
+.thought {
+    background-color: #ffffff;
+    border: 1px solid #e1e8ed;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.2s ease;
+}
+
+.thought:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.thought.revision {
+    border-left: 4px solid #e74c3c;
+    background-color: #fdf2f2;
+}
+
+.thought.branch {
+    border-left: 4px solid #27ae60;
+    background-color: #f0f9f0;
+}
+
+.thought h3 {
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.thought.revision h3::before {
+    content: "🔄";
+    font-size: 1.2rem;
+}
+
+.thought.branch h3::before {
+    content: "🌿";
+    font-size: 1.2rem;
+}
+
+.thought:not(.revision):not(.branch) h3::before {
+    content: "💭";
+    font-size: 1.2rem;
+}
+
+.timestamp {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    font-style: italic;
+    margin-bottom: 1rem;
+}
+
+.content {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: #2c3e50;
+    margin-bottom: 1rem;
+    white-space: pre-wrap;
+}
+
+.revision-note {
+    background-color: #fdf2f2;
+    color: #c0392b;
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-style: italic;
+    border-left: 3px solid #e74c3c;
+}
+
+.branch-note {
+    background-color: #f0f9f0;
+    color: #27ae60;
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-style: italic;
+    border-left: 3px solid #27ae60;
+}
+
+.statistics {
+    background-color: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin: 2rem 0;
+    border: 1px solid #dee2e6;
+}
+
+.statistics h3 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+}
+
+.statistics ul {
+    list-style: none;
+    padding: 0;
+}
+
+.statistics li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+}
+
+.statistics li:last-child {
+    border-bottom: none;
+}
+
+.statistics strong {
+    color: #2c3e50;
+}
+
+.progress-bar {
+    background-color: #ecf0f1;
+    border-radius: 10px;
+    height: 20px;
+    margin: 1rem 0;
+    overflow: hidden;
+}
+
+.progress-fill {
+    background: linear-gradient(90deg, #3498db, #2980b9);
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.branches {
+    margin-top: 2rem;
+}
+
+.branch {
+    background-color: #f0f9f0;
+    border: 1px solid #27ae60;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.branch h3 {
+    color: #27ae60;
+    margin-bottom: 0.5rem;
+}
+
+.branch ul {
+    list-style: none;
+    padding-left: 1rem;
+}
+
+.branch li {
+    padding: 0.25rem 0;
+    border-bottom: 1px solid #d5f4e6;
+}
+
+.branch li:last-child {
+    border-bottom: none;
+}
+
+.analytics {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+}
+
+.analytics pre {
+    background-color: #2c3e50;
+    color: #ecf0f1;
+    padding: 1rem;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+footer {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid #dee2e6;
+    text-align: center;
+    color: #7f8c8d;
+    font-size: 0.9rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem;
+        margin: 0;
+        box-shadow: none;
+    }
+    
+    h1 {
+        font-size: 2rem;
+    }
+    
+    h2 {
+        font-size: 1.5rem;
+    }
+    
+    h3 {
+        font-size: 1.1rem;
+    }
+    
+    .thought {
+        padding: 1rem;
+    }
+    
+    .session-info {
+        padding: 1rem;
+    }
+}
+
+/* Print styles */
+@media print {
+    body {
+        background-color: white;
+    }
+    
+    .container {
+        box-shadow: none;
+        max-width: none;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .thought {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+    
+    h1, h2, h3 {
+        break-after: avoid;
+        page-break-after: avoid;
+    }
+    
+    .thought h3 {
+        break-before: avoid;
+        page-break-before: avoid;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #1a1a1a;
+        color: #e1e1e1;
+    }
+    
+    .container {
+        background-color: #2d2d2d;
+        color: #e1e1e1;
+    }
+    
+    h1, h2, h3 {
+        color: #ffffff;
+    }
+    
+    .thought {
+        background-color: #3d3d3d;
+        border-color: #4d4d4d;
+        color: #e1e1e1;
+    }
+    
+    .session-info {
+        background-color: #3d3d3d;
+        border-color: #3498db;
+    }
+    
+    .statistics {
+        background-color: #3d3d3d;
+        border-color: #4d4d4d;
+    }
+    
+    .content {
+        color: #e1e1e1;
+    }
+    
+    .timestamp {
+        color: #a0a0a0;
+    }
+} 

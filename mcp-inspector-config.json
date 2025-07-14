@@ -1,0 +1,112 @@
+{
+  "name": "UltraFast MCP Sequential Thinking Server",
+  "description": "High-performance Rust-based MCP server for sequential thinking with dynamic problem-solving capabilities",
+  "servers": [
+    {
+      "name": "sequential-thinking-server-http",
+      "type": "http",
+      "url": "http://localhost:8080/mcp"
+    }
+  ],
+  "mcpServers": {
+    "sequential-thinking-server-stdio": {
+      "command": "cargo",
+      "args": [
+        "run",
+        "--release",
+        "--bin",
+        "sequential-thinking-server",
+        "--",
+        "stdio"
+      ],
+      "cwd": ".",
+      "env": {}
+    }
+  },
+  "tools": [
+    {
+      "name": "sequential_thinking",
+      "description": "A detailed tool for dynamic and reflective problem-solving through thoughts. This tool helps analyze problems through a flexible thinking process that can adapt and evolve. Each thought can build on, question, or revise previous insights as understanding deepens.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "thought": {
+            "type": "string",
+            "description": "The content of the current thought"
+          },
+          "thoughtNumber": {
+            "type": "integer",
+            "description": "The sequential number of this thought"
+          },
+          "totalThoughts": {
+            "type": "integer",
+            "description": "Estimated total number of thoughts needed"
+          },
+          "nextThoughtNeeded": {
+            "type": "boolean",
+            "description": "Whether more thoughts are needed after this one"
+          },
+          "isRevision": {
+            "type": "boolean",
+            "description": "Whether this thought revises a previous thought"
+          },
+          "revisesThought": {
+            "type": "integer",
+            "description": "The number of the thought being revised (if isRevision is true)"
+          },
+          "branchFromThought": {
+            "type": "integer",
+            "description": "The number of the thought to branch from"
+          },
+          "branchId": {
+            "type": "string",
+            "description": "Unique identifier for this branch"
+          },
+          "needsMoreThoughts": {
+            "type": "boolean",
+            "description": "Whether the thinking process needs more thoughts"
+          }
+        },
+        "required": ["thought", "thoughtNumber", "totalThoughts", "nextThoughtNeeded"]
+      }
+    },
+    {
+      "name": "export_session",
+      "description": "Export the current thinking session in various formats (JSON, Markdown, etc.)",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "format": {
+            "type": "string",
+            "enum": ["json", "markdown", "html", "text"],
+            "default": "json",
+            "description": "Export format"
+          }
+        }
+      }
+    },
+    {
+      "name": "analyze_session",
+      "description": "Analyze the current thinking session and provide insights about the thinking process",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "merge_sessions",
+      "description": "Merge multiple thinking sessions into one comprehensive session",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "sessionIds": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Array of session IDs to merge"
+          }
+        },
+        "required": ["sessionIds"]
+      }
+    }
+  ]
+} 

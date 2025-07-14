@@ -1,0 +1,129 @@
+[package]
+name = "ultrafast-mcp-sequential-thinking"
+version = "0.1.0"
+edition = "2021"
+authors = ["Your Name <your.email@example.com>"]
+description = "High-performance Rust-based MCP server and client for sequential thinking"
+license = "MIT"
+repository = "https://github.com/your-org/ultrafast-mcp-sequential-thinking"
+keywords = ["mcp", "model-context-protocol", "sequential-thinking", "rust", "ai"]
+categories = ["api-bindings", "development-tools", "science"]
+
+[[bin]]
+name = "sequential-thinking-server"
+path = "src/bin/server.rs"
+
+[[bin]]
+name = "sequential-thinking-client"
+path = "src/bin/client.rs"
+
+[dependencies]
+# UltraFast MCP dependencies
+ultrafast-mcp = { path = "../ultrafast-mcp/crates/ultrafast-mcp", features = ["http", "stdio"] }
+
+# Async runtime
+tokio = { version = "1.0", features = ["full"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Logging and tracing
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# CLI argument parsing
+clap = { version = "4.0", features = ["derive"] }
+
+# UUID generation
+uuid = { version = "1.0", features = ["v4", "serde"] }
+
+# Time handling
+chrono = { version = "0.4", features = ["serde"] }
+
+# Async traits
+async-trait = "0.1"
+
+# Collections and utilities
+dashmap = "5.0"
+indexmap = "2.0"
+
+# Configuration
+config = "0.13"
+toml = "0.8"
+
+# HTTP client (for client)
+reqwest = { version = "0.11", features = ["json"], optional = true }
+
+# Markdown processing (for export)
+markdown = { version = "0.3", optional = true }
+pulldown-cmark = { version = "0.9", optional = true }
+
+# Progress bars
+indicatif = "0.17"
+
+# Color output
+colored = "2.0"
+
+# File system operations
+walkdir = "2.3"
+
+# Regular expressions
+regex = "1.0"
+
+# Base64 encoding
+base64 = "0.21"
+
+# JSON Schema validation
+jsonschema = "0.17"
+
+# Metrics and monitoring
+metrics = { version = "0.21", optional = true }
+metrics-exporter-prometheus = { version = "0.12", optional = true }
+
+# Rate limiting
+governor = "0.6"
+
+# Caching
+moka = { version = "0.12", features = ["sync"] }
+
+# YAML serialization (for export)
+serde_yaml = "0.9"
+
+# Terminal detection
+atty = "0.2"
+
+# Logging appender
+tracing-appender = "0.2"
+
+[dev-dependencies]
+# Testing
+tokio-test = "0.4"
+criterion = "0.5"
+mockall = "0.12"
+
+# Test utilities
+tempfile = "3.8"
+assert_fs = "1.1"
+
+[features]
+default = ["http-transport", "analytics", "export"]
+http-transport = ["reqwest", "ultrafast-mcp/http"]
+stdio-transport = ["ultrafast-mcp/stdio"]
+analytics = ["metrics", "metrics-exporter-prometheus"]
+export = ["markdown", "pulldown-cmark"]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[profile.dev]
+opt-level = 0
+debug = true 

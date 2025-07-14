@@ -1,0 +1,28 @@
+# Rust build
+/target/
+**/*.rs.bk
+
+# Cargo
+Cargo.lock
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*.swn
+*.bak
+*.tmp
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+
+# Byebug command history
+.byebug_history
+
+# Other
+*.old
+*.orig 
