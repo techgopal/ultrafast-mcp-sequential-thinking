@@ -36,8 +36,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./ultrafast-mcp-sequential-thinking
-          file: ./ultrafast-mcp-sequential-thinking/Dockerfile
+          context: .
+          file: ./Dockerfile
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/ultrafast-mcp-sequential-thinking:latest
