@@ -2,7 +2,8 @@
 FROM rust:1.88.0 as builder
 WORKDIR /app
 # Copy only the necessary files for building the crate
-COPY Cargo.toml Cargo.lock ./
+COPY Cargo.toml ./
+COPY Cargo.lock ./
 COPY src ./src
 COPY README.md ./
 # If you have a build.rs or other files, add them here
