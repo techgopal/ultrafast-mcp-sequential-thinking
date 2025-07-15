@@ -6,7 +6,7 @@ authors = ["techgopal <techgopal2@gmail.com>"]
 description = "High-performance Rust-based MCP server and client for sequential thinking"
 license = "MIT"
 repository = "https://github.com/techgopal/ultrafast-mcp-sequential-thinking"
-keywords = ["mcp", "model-context-protocol", "sequential-thinking", "rust", "ai"]
+keywords = ["mcp", "context-protocol", "sequential-thinking", "rust", "ai"]
 categories = ["api-bindings", "development-tools", "science"]
 
 [[bin]]
