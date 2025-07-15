@@ -2,10 +2,10 @@
 name = "ultrafast-mcp-sequential-thinking"
 version = "0.1.0"
 edition = "2021"
-authors = ["Your Name <your.email@example.com>"]
+authors = ["techgopal <techgopal2@gmail.com>"]
 description = "High-performance Rust-based MCP server and client for sequential thinking"
 license = "MIT"
-repository = "https://github.com/your-org/ultrafast-mcp-sequential-thinking"
+repository = "https://github.com/techgopal/ultrafast-mcp-sequential-thinking"
 keywords = ["mcp", "model-context-protocol", "sequential-thinking", "rust", "ai"]
 categories = ["api-bindings", "development-tools", "science"]
 

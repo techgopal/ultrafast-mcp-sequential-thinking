@@ -1,5 +1,12 @@
 # UltraFast MCP Sequential Thinking
 
+[![Docker Pulls](https://img.shields.io/docker/pulls/techgopal/ultrafast-mcp-sequential-thinking)](https://hub.docker.com/r/techgopal/ultrafast-mcp-sequential-thinking)
+[![Docker Image](https://img.shields.io/badge/docker-image-blue)](https://hub.docker.com/r/techgopal/ultrafast-mcp-sequential-thinking)
+
+**Official Docker image available at [`techgopal/ultrafast-mcp-sequential-thinking`](https://hub.docker.com/r/techgopal/ultrafast-mcp-sequential-thinking)**
+
+---
+
 A high-performance, Rust-based Model Context Protocol (MCP) server and client implementation for sequential thinking, built on the UltraFast MCP framework.
 
 ## 🚀 Overview
@@ -122,25 +129,28 @@ cargo run --bin sequential-thinking-server -- --transport http --port 8080
 
 ### Quick Start with Docker
 
-#### 1. Build the Docker Image
+#### 1. Use the Official Docker Image
 ```bash
-# Build the server image
+# Pull the latest image from Docker Hub
+docker pull techgopal/ultrafast-mcp-sequential-thinking:latest
+
+# Run HTTP server on port 8080
+docker run --rm -p 8080:8080 techgopal/ultrafast-mcp-sequential-thinking:latest
+
+# Run with custom configuration
+docker run --rm -p 8080:8080 -e MAX_THOUGHTS=200 techgopal/ultrafast-mcp-sequential-thinking:latest
+
+# Run in detached mode
+docker run -d --name thinking-server -p 8080:8080 techgopal/ultrafast-mcp-sequential-thinking:latest
+```
+
+#### 2. (Optional) Build the Docker Image Locally
+```bash
+# Build the server image locally (if you want to make changes)
 docker build -t sequential-thinking-server .
 
 # Verify the image was created
 docker images | grep sequential-thinking-server
-```
-
-#### 2. Run the Server with Docker
-```bash
-# Run HTTP server on port 8080
-docker run --rm -p 8080:8080 sequential-thinking-server
-
-# Run with custom configuration
-docker run --rm -p 8080:8080 -e MAX_THOUGHTS=200 sequential-thinking-server
-
-# Run in detached mode
-docker run -d --name thinking-server -p 8080:8080 sequential-thinking-server
 ```
 
 #### 3. Connect Client to Docker Server
@@ -167,7 +177,7 @@ If you want to use MCP Inspector or other tools to launch the server in a Docker
         "run",
         "--rm",
         "-i",
-        "sequential-thinking-server:latest",
+        "techgopal/ultrafast-mcp-sequential-thinking:latest",
         "/usr/local/bin/sequential-thinking-server",
         "--transport",
         "stdio",
@@ -379,7 +389,7 @@ cargo bench
 ### Development Setup
 ```bash
 # Clone repository
-git clone https://github.com/your-org/ultrafast-mcp-sequential-thinking.git
+git clone https://github.com/techgopal/ultrafast-mcp-sequential-thinking.git
 cd ultrafast-mcp-sequential-thinking
 
 # Install dependencies
@@ -415,17 +425,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Model Context Protocol**: For the excellent protocol specification
 - **UltraFast MCP**: For the high-performance Rust framework
 - **Official Sequential Thinking Server**: For the original TypeScript implementation
-- **Rust Community**: For the amazing ecosystem and tools
 
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/your-org/ultrafast-mcp-sequential-thinking/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-org/ultrafast-mcp-sequential-thinking/discussions)
-- **Documentation**: [Project Wiki](https://github.com/your-org/ultrafast-mcp-sequential-thinking/wiki)
 
 ## 🔄 Changelog
 
-### v1.0.0 (Planned)
+### v1.0.0
 - Initial release
 - Full MCP 2025-06-18 compliance
 - High-performance Rust implementation

@@ -380,7 +380,11 @@ impl AnalyticsEngine {
         let total_branches = stats.total_branches as u32;
 
         let session_duration = 0u64;
-        let avg_thought_length = 0.0f64;
+        let avg_thought_length = if stats.total_thought_length > 0 {
+            stats.total_thought_length as f64 / total_thoughts as f64
+        } else {
+            0.0
+        };
         let completion_rate = if progress.total_thoughts > 0 {
             progress.completed_thoughts as f64 / progress.total_thoughts as f64
         } else {
@@ -848,15 +852,16 @@ mod tests {
     #[test]
     fn test_basic_metrics_calculation() {
         let engine = AnalyticsEngine::new();
-        let _thoughts = vec![
+        let thoughts = vec![
             ThoughtData::new("First thought".to_string(), 1, 3),
             ThoughtData::new("Second thought".to_string(), 2, 3),
             ThoughtData::new("Third thought".to_string(), 3, 3),
         ];
 
-        let stats = ThinkingStats::default();
+        let mut stats = ThinkingStats::default();
+        stats.total_thoughts = thoughts.len() as u64;
         let progress = ThinkingProgress::new(3, 3);
-
+        stats.total_thought_length = thoughts.iter().map(|t| t.thought.len() as u64).sum();
         let metrics = engine.calculate_basic_metrics(&stats, &progress);
 
         assert_eq!(metrics.total_thoughts, 3);

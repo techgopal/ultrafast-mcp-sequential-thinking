@@ -309,6 +309,8 @@ pub struct ThinkingStats {
     pub avg_processing_time_ms: f64,
     /// Total processing time
     pub total_processing_time_ms: u64,
+    /// Total length of all thoughts (for avg_thought_length)
+    pub total_thought_length: u64,
 }
 
 impl Default for ThinkingStats {
@@ -319,6 +321,7 @@ impl Default for ThinkingStats {
             total_branches: 0,
             avg_processing_time_ms: 0.0,
             total_processing_time_ms: 0,
+            total_thought_length: 0,
         }
     }
 }

@@ -606,10 +606,7 @@ mod tests {
     #[test]
     fn test_config_manager() {
         let mut manager = ConfigManager::new();
-        let server_config = ServerConfig {
-            name: String::new(),
-            ..Default::default()
-        };
+        let server_config = ServerConfig::default();
         manager.set_server_config(server_config);
 
         let loaded_config = manager.get_server_config();

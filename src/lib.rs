@@ -20,34 +20,38 @@
 //!
 //! ## Quick Start
 //!
-//! ```rust
-//! use ultrafast_mcp_sequential_thinking::{
-//!     SequentialThinkingClient, ThoughtData, ThinkingSession
-//! };
+//! This crate provides a high-performance, type-safe Rust implementation of the Model Context Protocol (MCP) for sequential thinking. It enables you to break down complex problems into steps, track progress, and manage sessions programmatically.
+//!
+//! ### Example: Start a Session, Add a Thought, and Complete
+//!
+//! ```rust,no_run
+//! use ultrafast_mcp_sequential_thinking::{SequentialThinkingClient, ThoughtData};
 //!
 //! #[tokio::main]
 //! async fn main() -> anyhow::Result<()> {
-//!     // Create client
+//!     // Create a client connected to the server
 //!     let client = SequentialThinkingClient::new("http://localhost:8080").await?;
-//!     
-//!     // Start a thinking session
-//!     let mut session = client.start_session("Solve a complex problem").await?;
-//!     
-//!     // Add thoughts
-//!     session.add_thought(ThoughtData {
+//!
+//!     // Start a new thinking session
+//!     let session = client.start_session("Solve a complex problem".to_string()).await?;
+//!
+//!     // Add a thought to the session
+//!     client.add_thought(&session.session_id, ThoughtData {
 //!         thought: "First, I need to understand the problem scope".to_string(),
 //!         thought_number: 1,
 //!         total_thoughts: 5,
 //!         next_thought_needed: true,
 //!         ..Default::default()
 //!     }).await?;
-//!     
-//!     // Complete the session
-//!     session.complete().await?;
-//!     
+//!
+//!     // Mark the session as complete
+//!     client.complete_session(&session.session_id).await?;
+//!
 //!     Ok(())
 //! }
 //! ```
+//!
+//! See the crate documentation and module docs for more details and advanced usage.
 
 pub mod analytics;
 pub mod config;
