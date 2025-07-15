@@ -7,13 +7,11 @@
 
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
-use tracing::{error, info, warn};
-use tracing_subscriber::{EnvFilter, FmtSubscriber};
+use tracing::{info};
+use tracing_subscriber::EnvFilter;
 
-use ultrafast_mcp::{ClientCapabilities, ClientInfo, UltraFastClient};
 use ultrafast_mcp_sequential_thinking::{
-    default_client_config, thinking::client::ClientThinkingConfig, ClientConfig,
-    SequentialThinkingClient, ThoughtData,
+    SequentialThinkingClient,
 };
 
 /// Command-line arguments for the sequential thinking client
@@ -145,7 +143,7 @@ impl ClientApp {
         // Create client (connection and initialization handled internally)
         let client = SequentialThinkingClient::with_config(&args.server, config.thinking.clone())
             .await
-            .map_err(|e| format!("Failed to create client: {}", e))?;
+            .map_err(|e| format!("Failed to create client: {e}"))?;
 
         Ok(Self { config, client })
     }
@@ -208,7 +206,7 @@ impl ClientApp {
         let env_filter =
             EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(&args.log_level));
 
-        let mut builder = tracing_subscriber::fmt()
+        let builder = tracing_subscriber::fmt()
             .with_env_filter(env_filter)
             .with_ansi(atty::is(atty::Stream::Stderr));
 
@@ -237,7 +235,7 @@ impl ClientApp {
             .client
             .start_session(session_title)
             .await
-            .map_err(|e| format!("Failed to start session: {}", e))?;
+            .map_err(|e| format!("Failed to start session: {e}"))?;
 
         println!("🎯 Interactive Thinking Session Started");
         println!("Session ID: {}", session.session_id);
@@ -293,7 +291,7 @@ impl ClientApp {
                             }
                         }
                         Err(e) => {
-                            println!("❌ Failed to process thought: {}", e);
+                            println!("❌ Failed to process thought: {e}");
                         }
                     }
                 }
@@ -321,7 +319,7 @@ impl ClientApp {
                             thought_number += 1;
                         }
                         Err(e) => {
-                            println!("❌ Failed to process revision: {}", e);
+                            println!("❌ Failed to process revision: {e}");
                         }
                     }
                 }
@@ -351,7 +349,7 @@ impl ClientApp {
                             thought_number += 1;
                         }
                         Err(e) => {
-                            println!("❌ Failed to process branch: {}", e);
+                            println!("❌ Failed to process branch: {e}");
                         }
                     }
                 }
@@ -388,11 +386,11 @@ impl ClientApp {
                         .await
                     {
                         Ok(content) => {
-                            println!("📄 Session exported in {} format:", format);
-                            println!("{}", content);
+                            println!("📄 Session exported in {format} format:");
+                            println!("{content}");
                         }
                         Err(e) => {
-                            println!("❌ Failed to export session: {}", e);
+                            println!("❌ Failed to export session: {e}");
                         }
                     }
                 }
@@ -412,8 +410,7 @@ impl ClientApp {
                 }
                 _ => {
                     println!(
-                        "❌ Unknown command: {}. Type 'help' for available commands.",
-                        command
+                        "❌ Unknown command: {command}. Type 'help' for available commands."
                     );
                 }
             }
@@ -435,7 +432,7 @@ impl ClientApp {
             .client
             .start_session(session_title)
             .await
-            .map_err(|e| format!("Failed to start session: {}", e))?;
+            .map_err(|e| format!("Failed to start session: {e}"))?;
 
         let thought_data = ultrafast_mcp_sequential_thinking::ThoughtData {
             thought,
@@ -460,7 +457,7 @@ impl ClientApp {
                 println!("More thoughts needed: {}", processed.next_thought_needed);
             }
             Err(e) => {
-                println!("❌ Failed to process thought: {}", e);
+                println!("❌ Failed to process thought: {e}");
             }
         }
 
@@ -480,12 +477,12 @@ impl ClientApp {
                     std::fs::write(&output_path, content)?;
                     println!("✅ Session exported to: {}", output_path.display());
                 } else {
-                    println!("📄 Session exported in {} format:", format);
-                    println!("{}", content);
+                    println!("📄 Session exported in {format} format:");
+                    println!("{content}");
                 }
             }
             Err(e) => {
-                println!("❌ Failed to export session: {}", e);
+                println!("❌ Failed to export session: {e}");
             }
         }
 
@@ -500,7 +497,7 @@ impl ClientApp {
                 println!("{}", serde_json::to_string_pretty(&analysis)?);
             }
             Err(e) => {
-                println!("❌ Failed to analyze session: {}", e);
+                println!("❌ Failed to analyze session: {e}");
             }
         }
 
@@ -517,7 +514,7 @@ impl ClientApp {
                 }
             }
             Err(e) => {
-                println!("❌ Failed to list tools: {}", e);
+                println!("❌ Failed to list tools: {e}");
             }
         }
 
@@ -568,7 +565,7 @@ impl ClientApp {
                 }
             }
             Err(e) => {
-                println!("❌ Connection failed: {}", e);
+                println!("❌ Connection failed: {e}");
             }
         }
 
@@ -634,7 +631,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 // Create client and export session
                 let app = ClientApp::new(&args).await?;
-                app.export_session(&session_id, &format, output.clone())
+                app.export_session(session_id, format, output.clone())
                     .await
             }
             Commands::Analyze { session_id } => {
@@ -643,7 +640,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 // Create client and analyze session
                 let app = ClientApp::new(&args).await?;
-                app.analyze_session(&session_id).await
+                app.analyze_session(session_id).await
             }
             Commands::Tools => {
                 // Initialize logging
@@ -666,7 +663,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let app = ClientApp::new(&args).await?;
                 app.test_connection().await
             }
-            Commands::Generate { output } => ClientApp::generate_config(&output),
+            Commands::Generate { output } => ClientApp::generate_config(output),
         }
     } else {
         // No subcommand provided, show help

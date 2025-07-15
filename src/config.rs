@@ -6,7 +6,6 @@
 //! for both server and client components.
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::path::Path;
 
 use crate::thinking::client::ClientThinkingConfig;
@@ -542,7 +541,7 @@ pub mod utils {
         manager.load_from_env();
 
         // Validate configuration
-        manager.validate();
+        let _ = manager.validate();
 
         Ok(manager)
     }
@@ -607,7 +606,7 @@ mod tests {
     #[test]
     fn test_config_manager() {
         let mut manager = ConfigManager::new();
-        let server_config = ServerConfig::default();
+        let server_config = ServerConfig { name: String::new(), ..Default::default() };
         manager.set_server_config(server_config);
 
         let loaded_config = manager.get_server_config();
@@ -617,8 +616,7 @@ mod tests {
     #[test]
     fn test_config_validation() {
         let mut manager = ConfigManager::new();
-        let mut server_config = ServerConfig::default();
-        server_config.name = String::new(); // Invalid
+        let server_config = ServerConfig { name: String::new(), ..Default::default() };
         manager.set_server_config(server_config);
 
         let result = manager.validate();

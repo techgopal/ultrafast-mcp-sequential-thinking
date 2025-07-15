@@ -7,8 +7,8 @@
 
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
-use tracing::{error, info, warn};
-use tracing_subscriber::{EnvFilter, FmtSubscriber};
+use tracing::{info, error};
+use tracing_subscriber::EnvFilter;
 
 use ultrafast_mcp::{ServerCapabilities, ServerInfo, ToolsCapability};
 use ultrafast_mcp_sequential_thinking::{
@@ -226,7 +226,7 @@ impl ServerApp {
         let env_filter =
             EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(&args.log_level));
 
-        let mut builder = tracing_subscriber::fmt()
+        let builder = tracing_subscriber::fmt()
             .with_env_filter(env_filter)
             .with_ansi(atty::is(atty::Stream::Stderr));
 
@@ -404,8 +404,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Handle subcommands first
     if let Some(ref command) = args.command {
         match command {
-            Commands::Validate { config } => match ServerApp::load_config_from_file(&config) {
-                Ok(mut server_config) => {
+            Commands::Validate { config } => match ServerApp::load_config_from_file(config) {
+                Ok(server_config) => {
                     let server = SequentialThinkingServer::new();
                     let app = ServerApp {
                         config: server_config,
@@ -420,7 +420,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         Err(errors) => {
                             println!("Configuration validation failed:");
                             for error in errors {
-                                println!("  - {}", error);
+                                println!("  - {error}");
                             }
                             Err("Configuration validation failed".into())
                         }
@@ -431,7 +431,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     Err(e)
                 }
             },
-            Commands::Generate { output } => ServerApp::generate_config(&output),
+            Commands::Generate { output } => ServerApp::generate_config(output),
             Commands::Info => {
                 let app = ServerApp::new(&args)?;
                 app.show_info();

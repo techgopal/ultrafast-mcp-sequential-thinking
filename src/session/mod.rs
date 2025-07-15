@@ -80,15 +80,14 @@ pub struct ThinkingSession {
     pub metadata: SessionMetadata,
     /// Thinking engine
     pub engine: ThinkingEngine,
-    /// Session lock for concurrent access
+    #[allow(dead_code)]
     lock: Arc<RwLock<()>>,
 }
 
 impl ThinkingSession {
     /// Create a new thinking session
     pub fn new(session_id: String, title: String) -> Self {
-        let mut metadata = SessionMetadata::default();
-        metadata.title = title;
+        let metadata = SessionMetadata { title, ..Default::default() };
 
         Self {
             session_id,

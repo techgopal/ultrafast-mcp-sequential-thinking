@@ -74,8 +74,13 @@ impl ThoughtData {
             thought_number,
             total_thoughts,
             next_thought_needed: true,
+            is_revision: None,
+            revises_thought: None,
+            branch_from_thought: None,
+            branch_id: None,
+            needs_more_thoughts: None,
             timestamp: Some(chrono::Utc::now()),
-            ..Default::default()
+            metadata: None,
         }
     }
 
@@ -88,8 +93,11 @@ impl ThoughtData {
             next_thought_needed: true,
             is_revision: Some(true),
             revises_thought: Some(revises_thought),
+            branch_from_thought: None,
+            branch_id: None,
+            needs_more_thoughts: None,
             timestamp: Some(chrono::Utc::now()),
-            ..Default::default()
+            metadata: None,
         }
     }
 
@@ -105,10 +113,13 @@ impl ThoughtData {
             thought_number,
             total_thoughts: thought_number,
             next_thought_needed: true,
+            is_revision: None,
+            revises_thought: None,
             branch_from_thought: Some(branch_from_thought),
             branch_id: Some(branch_id),
+            needs_more_thoughts: None,
             timestamp: Some(chrono::Utc::now()),
-            ..Default::default()
+            metadata: None,
         }
     }
 

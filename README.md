@@ -154,6 +154,35 @@ curl -X POST http://localhost:8080/mcp \
   -d '{"jsonrpc":"2.0","method":"initialize","params":{"protocolVersion":"2025-06-18"},"id":1}'
 ```
 
+### Example MCP Inspector Docker Configuration
+
+If you want to use MCP Inspector or other tools to launch the server in a Docker container with advanced options (such as analytics and increased max thoughts), use the following configuration:
+
+```json
+{
+  "mcpServers": {
+    "sequential-thinking": {
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-i",
+        "sequential-thinking-server:latest",
+        "/usr/local/bin/sequential-thinking-server",
+        "--transport",
+        "stdio",
+        "--max-thoughts",
+        "200",
+        "--enable-analytics"
+      ],
+      "env": {}
+    }
+  }
+}
+```
+
+This configuration will start the server in a Docker container using STDIO transport, with analytics enabled and a higher max thoughts limit. Adjust the arguments as needed for your use case.
+
 #### 4. Docker Compose (Optional)
 ```bash
 # Create docker-compose.yml for easy deployment

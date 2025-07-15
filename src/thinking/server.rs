@@ -8,7 +8,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{error, info, warn};
+use tracing::{info};
 
 use ultrafast_mcp::{
     ListToolsRequest, ListToolsResponse, MCPError, MCPResult, ServerCapabilities, ServerInfo, Tool,
@@ -163,7 +163,7 @@ impl SequentialThinkingServer {
             }
         }
 
-        result.map_err(|e| SequentialThinkingError::processing_error(e))
+        result.map_err(SequentialThinkingError::processing_error)
     }
 
     /// Create a new thinking session
@@ -329,8 +329,7 @@ impl SequentialThinkingToolHandler {
             "markdown" => self.export_to_markdown(&export_data),
             _ => {
                 return Err(MCPError::invalid_params(format!(
-                    "Unsupported format: {}",
-                    format
+                    "Unsupported format: {format}"
                 )))
             }
         };
@@ -463,22 +462,19 @@ impl SequentialThinkingToolHandler {
         markdown.push_str("# Sequential Thinking Session\n\n");
 
         if let Some(session_id) = session["sessionId"].as_str() {
-            markdown.push_str(&format!("**Session ID:** {}\n\n", session_id));
+            markdown.push_str(&format!("**Session ID:** {session_id}\n\n"));
         }
 
         markdown.push_str("## Thoughts\n\n");
 
         if let Some(thoughts_array) = thoughts.as_array() {
-            for (i, thought) in thoughts_array.iter().enumerate() {
+            for thought in thoughts_array.iter() {
                 let thought_number = thought["thoughtNumber"].as_u64().unwrap_or(0);
                 let total_thoughts = thought["totalThoughts"].as_u64().unwrap_or(0);
                 let thought_content = thought["thought"].as_str().unwrap_or("");
 
-                markdown.push_str(&format!(
-                    "### Thought {}/{}\n\n",
-                    thought_number, total_thoughts
-                ));
-                markdown.push_str(&format!("{}\n\n", thought_content));
+                markdown.push_str(&format!("### Thought {thought_number}/{total_thoughts}\n\n"));
+                markdown.push_str(&format!("{thought_content}\n\n"));
 
                 if thought["isRevision"].as_bool().unwrap_or(false) {
                     markdown.push_str("*This thought revises a previous thought*\n\n");

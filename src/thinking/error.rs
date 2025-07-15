@@ -208,49 +208,49 @@ impl SequentialThinkingError {
     pub fn user_message(&self) -> String {
         match self {
             Self::InvalidThoughtData { message } => {
-                format!("Invalid thought data: {}", message)
+                format!("Invalid thought data: {message}")
             }
             Self::ProcessingError { message } => {
-                format!("Failed to process thought: {}", message)
+                format!("Failed to process thought: {message}")
             }
             Self::SessionError { message } => {
-                format!("Session error: {}", message)
+                format!("Session error: {message}")
             }
             Self::BranchError { message } => {
-                format!("Branch error: {}", message)
+                format!("Branch error: {message}")
             }
             Self::ValidationError { message } => {
-                format!("Validation failed: {}", message)
+                format!("Validation failed: {message}")
             }
             Self::ConfigError { message } => {
-                format!("Configuration error: {}", message)
+                format!("Configuration error: {message}")
             }
             Self::SerializationError { message } => {
-                format!("Data format error: {}", message)
+                format!("Data format error: {message}")
             }
             Self::TransportError { message } => {
-                format!("Connection error: {}", message)
+                format!("Connection error: {message}")
             }
             Self::InternalError { message } => {
-                format!("System error: {}", message)
+                format!("System error: {message}")
             }
             Self::NotFound { resource } => {
-                format!("Resource not found: {}", resource)
+                format!("Resource not found: {resource}")
             }
             Self::PermissionDenied { reason } => {
-                format!("Access denied: {}", reason)
+                format!("Access denied: {reason}")
             }
             Self::RateLimitExceeded { limit } => {
-                format!("Too many requests: {}", limit)
+                format!("Too many requests: {limit}")
             }
             Self::Timeout { duration } => {
-                format!("Operation timed out after {:?}", duration)
+                format!("Operation timed out after {duration:?}")
             }
             Self::Cancelled { reason } => {
-                format!("Operation cancelled: {}", reason)
+                format!("Operation cancelled: {reason}")
             }
             Self::Wrapped { source } => {
-                format!("Error: {}", source)
+                format!("Error: {source}")
             }
         }
     }
@@ -342,7 +342,7 @@ pub mod utils {
     /// Create a validation error for a specific field
     pub fn field_validation_error(field: &str, message: &str) -> SequentialThinkingError {
         SequentialThinkingError::ValidationError {
-            message: format!("Field '{}': {}", field, message),
+            message: format!("Field '{field}': {message}"),
         }
     }
 
@@ -353,7 +353,7 @@ pub mod utils {
 
     /// Create an invalid format error
     pub fn invalid_format_error(field: &str, expected: &str) -> SequentialThinkingError {
-        field_validation_error(field, &format!("Expected format: {}", expected))
+        field_validation_error(field, &format!("Expected format: {expected}"))
     }
 }
 

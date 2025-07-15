@@ -8,10 +8,10 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{debug, error, info, warn};
+use tracing::{info};
 
 use ultrafast_mcp::{
-    ClientCapabilities, ClientInfo, ListToolsRequest, ListToolsResponse, Tool, ToolCall,
+    ClientCapabilities, ClientInfo, ListToolsRequest, Tool, ToolCall,
     ToolContent, ToolResult, UltraFastClient,
 };
 
@@ -230,8 +230,7 @@ impl SequentialThinkingClient {
             // Connect via STDIO
             self.client.connect_stdio().await.map_err(|e| {
                 SequentialThinkingError::transport_error(format!(
-                    "Failed to connect via STDIO: {}",
-                    e
+                    "Failed to connect via STDIO: {e}"
                 ))
             })?;
         } else if server_url.starts_with("http://") || server_url.starts_with("https://") {
@@ -241,14 +240,12 @@ impl SequentialThinkingClient {
                 .await
                 .map_err(|e| {
                     SequentialThinkingError::transport_error(format!(
-                        "Failed to connect via HTTP: {}",
-                        e
+                        "Failed to connect via HTTP: {e}"
                     ))
                 })?;
         } else {
             return Err(SequentialThinkingError::transport_error(format!(
-                "Unsupported server URL format: {}",
-                server_url
+                "Unsupported server URL format: {server_url}"
             )));
         }
 
@@ -257,8 +254,7 @@ impl SequentialThinkingClient {
         // Initialize the MCP connection
         self.client.initialize().await.map_err(|e| {
             SequentialThinkingError::transport_error(format!(
-                "Failed to initialize MCP connection: {}",
-                e
+                "Failed to initialize MCP connection: {e}"
             ))
         })?;
 
@@ -299,7 +295,7 @@ impl SequentialThinkingClient {
     /// Add a thought to a session
     pub async fn add_thought(
         &self,
-        session_id: &str,
+        _session_id: &str,
         thought: ThoughtData,
     ) -> SequentialThinkingResult<ThoughtData> {
         let start_time = std::time::Instant::now();
@@ -312,15 +308,15 @@ impl SequentialThinkingClient {
 
         // Process thought locally first
         let mut sessions = self.sessions.write().await;
-        let session = sessions.get_mut(session_id).ok_or_else(|| {
-            SequentialThinkingError::not_found(format!("Session not found: {}", session_id))
+        let session = sessions.get_mut(_session_id).ok_or_else(|| {
+            SequentialThinkingError::not_found(format!("Session not found: {_session_id}"))
         })?;
 
         let processed_thought = session
             .engine
             .process_thought(thought.clone())
             .await
-            .map_err(|e| SequentialThinkingError::processing_error(e))?;
+            .map_err(SequentialThinkingError::processing_error)?;
 
         // Send thought to server
         let server_result = self.send_thought_to_server(thought).await;
@@ -389,11 +385,6 @@ impl SequentialThinkingClient {
                         stats.retry_count += 1;
                     }
 
-                    warn!(
-                        "Tool call failed, retrying (attempt {}/{}): {}",
-                        attempts, self.config.max_retry_attempts, e
-                    );
-
                     // Wait before retrying
                     tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
                 }
@@ -404,7 +395,7 @@ impl SequentialThinkingClient {
     /// Export a session
     pub async fn export_session(
         &self,
-        session_id: &str,
+        _session_id: &str,
         format: &str,
     ) -> SequentialThinkingResult<String> {
         let args = serde_json::json!({
@@ -440,7 +431,7 @@ impl SequentialThinkingClient {
     /// Analyze a session
     pub async fn analyze_session(
         &self,
-        session_id: &str,
+        _session_id: &str,
     ) -> SequentialThinkingResult<serde_json::Value> {
         let tool_call = ToolCall {
             name: "analyze_session".to_string(),
@@ -520,8 +511,7 @@ impl SequentialThinkingClient {
             Ok(())
         } else {
             Err(SequentialThinkingError::not_found(format!(
-                "Session not found: {}",
-                session_id
+                "Session not found: {session_id}"
             )))
         }
     }

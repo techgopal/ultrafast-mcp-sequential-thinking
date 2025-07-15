@@ -232,6 +232,7 @@ impl ExportEngine {
     }
 
     /// Export a session
+    #[allow(clippy::too_many_arguments)]
     pub async fn export_session(
         &mut self,
         session_id: &str,
@@ -241,7 +242,7 @@ impl ExportEngine {
         progress: Option<&ThinkingProgress>,
         branches: Option<&HashMap<String, Vec<ThoughtData>>>,
         analytics: Option<&serde_json::Value>,
-        options: ExportOptions,
+        _options: ExportOptions,
     ) -> Result<PathBuf, Box<dyn std::error::Error>> {
         let start_time = std::time::Instant::now();
 
@@ -254,11 +255,11 @@ impl ExportEngine {
             progress,
             branches,
             analytics,
-            &options,
+            &_options,
         )?;
 
         // Generate filename
-        let filename = self.generate_filename(session_id, &options.format)?;
+        let filename = self.generate_filename(session_id, &_options.format)?;
         let file_path = PathBuf::from(&self.config.export_directory).join(&filename);
 
         // Ensure export directory exists
@@ -267,14 +268,14 @@ impl ExportEngine {
         }
 
         // Export based on format
-        let content = match options.format {
-            ExportFormat::Json => self.export_to_json(&export_data, &options)?,
-            ExportFormat::Markdown => self.export_to_markdown(&export_data, &options)?,
-            ExportFormat::Html => self.export_to_html(&export_data, &options)?,
-            ExportFormat::Csv => self.export_to_csv(&export_data, &options)?,
-            ExportFormat::Yaml => self.export_to_yaml(&export_data, &options)?,
-            ExportFormat::Toml => self.export_to_toml(&export_data, &options)?,
-            ExportFormat::Pdf => self.export_to_pdf(&export_data, &options)?,
+        let content = match _options.format {
+            ExportFormat::Json => self.export_to_json(&export_data, &_options)?,
+            ExportFormat::Markdown => self.export_to_markdown(&export_data, &_options)?,
+            ExportFormat::Html => self.export_to_html(&export_data, &_options)?,
+            ExportFormat::Csv => self.export_to_csv(&export_data, &_options)?,
+            ExportFormat::Yaml => self.export_to_yaml(&export_data, &_options)?,
+            ExportFormat::Toml => self.export_to_toml(&export_data, &_options)?,
+            ExportFormat::Pdf => self.export_to_pdf(&export_data, &_options)?,
         };
 
         // Write to file
@@ -284,7 +285,7 @@ impl ExportEngine {
         let file_size = std::fs::metadata(&file_path).ok().map(|m| m.len());
         let export_record = ExportRecord {
             session_id: session_id.to_string(),
-            format: options.format,
+            format: _options.format,
             exported_at: Utc::now(),
             file_path: Some(file_path.clone()),
             file_size,
@@ -305,6 +306,7 @@ impl ExportEngine {
     }
 
     /// Prepare export data
+    #[allow(clippy::too_many_arguments)]
     fn prepare_export_data(
         &self,
         session_id: &str,
@@ -314,32 +316,32 @@ impl ExportEngine {
         progress: Option<&ThinkingProgress>,
         branches: Option<&HashMap<String, Vec<ThoughtData>>>,
         analytics: Option<&serde_json::Value>,
-        options: &ExportOptions,
+        _options: &ExportOptions,
     ) -> Result<ExportData, Box<dyn std::error::Error>> {
         let session_data = SessionExportData {
             session_id: session_id.to_string(),
-            metadata: if options.include_metadata {
+            metadata: if _options.include_metadata {
                 session_metadata.cloned()
             } else {
                 None
             },
             thoughts: thoughts.to_vec(),
-            statistics: if options.include_statistics {
+            statistics: if _options.include_statistics {
                 stats.cloned()
             } else {
                 None
             },
-            progress: if options.include_progress {
+            progress: if _options.include_progress {
                 progress.cloned()
             } else {
                 None
             },
-            branches: if options.include_branches {
+            branches: if _options.include_branches {
                 branches.cloned().unwrap_or_default()
             } else {
                 HashMap::new()
             },
-            analytics: if options.include_analytics {
+            analytics: if _options.include_analytics {
                 analytics.cloned()
             } else {
                 None
@@ -348,10 +350,10 @@ impl ExportEngine {
 
         let export_metadata = ExportMetadata {
             exported_at: Utc::now(),
-            format: options.format.to_string(),
+            format: _options.format.to_string(),
             version: env!("CARGO_PKG_VERSION").to_string(),
             tool: "ultrafast-mcp-sequential-thinking".to_string(),
-            options: options.clone(),
+            options: _options.clone(),
         };
 
         Ok(ExportData {
@@ -378,16 +380,16 @@ impl ExportEngine {
             .replace("{date}", &Utc::now().format("%Y%m%d").to_string())
             .replace("{time}", &Utc::now().format("%H%M%S").to_string());
 
-        Ok(format!("{}.{}", filename, extension))
+        Ok(format!("{filename}.{extension}"))
     }
 
     /// Export to JSON format
     fn export_to_json(
         &self,
         data: &ExportData,
-        options: &ExportOptions,
+        _options: &ExportOptions,
     ) -> Result<String, Box<dyn std::error::Error>> {
-        if options.pretty_print {
+        if _options.pretty_print {
             Ok(serde_json::to_string_pretty(data)?)
         } else {
             Ok(serde_json::to_string(data)?)
@@ -411,7 +413,7 @@ impl ExportEngine {
         if let Some(ref metadata) = data.session.metadata {
             markdown.push_str(&format!("**Title:** {}\n", metadata.title));
             if let Some(ref description) = metadata.description {
-                markdown.push_str(&format!("**Description:** {}\n", description));
+                markdown.push_str(&format!("**Description:** {description}\n"));
             }
             markdown.push_str(&format!("**Status:** {:?}\n", metadata.status));
             markdown.push_str(&format!("**Priority:** {:?}\n", metadata.priority));
@@ -423,7 +425,7 @@ impl ExportEngine {
                 "**Modified:** {}\n",
                 metadata.last_modified.format("%Y-%m-%d %H:%M:%S UTC")
             ));
-            markdown.push_str("\n");
+            markdown.push('\n');
         }
 
         // Statistics
@@ -443,7 +445,7 @@ impl ExportEngine {
                 "- **Total Processing Time:** {}ms\n",
                 stats.total_processing_time_ms
             ));
-            markdown.push_str("\n");
+            markdown.push('\n');
         }
 
         // Progress
@@ -469,13 +471,13 @@ impl ExportEngine {
                     "In Progress"
                 }
             ));
-            markdown.push_str("\n");
+            markdown.push('\n');
         }
 
         // Thoughts
         markdown.push_str("## Thoughts\n\n");
         for (i, thought) in data.session.thoughts.iter().enumerate() {
-            let thought_number = i + 1;
+            let _thought_number = i + 1;
             let prefix = if thought.is_revision() {
                 "🔄 Revision"
             } else if thought.is_branch() {
@@ -500,13 +502,13 @@ impl ExportEngine {
 
             if thought.is_revision() {
                 if let Some(revises_thought) = thought.revises_thought {
-                    markdown.push_str(&format!("*Revises thought {}*\n\n", revises_thought));
+                    markdown.push_str(&format!("*Revises thought {revises_thought}*\n\n"));
                 }
             }
 
             if thought.is_branch() {
                 if let Some(branch_id) = &thought.branch_id {
-                    markdown.push_str(&format!("*Branch ID: {}*\n\n", branch_id));
+                    markdown.push_str(&format!("*Branch ID: {branch_id}*\n\n"));
                 }
             }
         }
@@ -515,11 +517,11 @@ impl ExportEngine {
         if !data.session.branches.is_empty() {
             markdown.push_str("## Branches\n\n");
             for (branch_id, branch_thoughts) in &data.session.branches {
-                markdown.push_str(&format!("### Branch: {}\n\n", branch_id));
+                markdown.push_str(&format!("### Branch: {branch_id}\n\n"));
                 for thought in branch_thoughts {
                     markdown.push_str(&format!("- {}\n", thought.thought));
                 }
-                markdown.push_str("\n");
+                markdown.push('\n');
             }
         }
 
@@ -547,7 +549,7 @@ impl ExportEngine {
     fn export_to_html(
         &self,
         data: &ExportData,
-        options: &ExportOptions,
+        _options: &ExportOptions,
     ) -> Result<String, Box<dyn std::error::Error>> {
         let mut html = String::new();
 
@@ -570,7 +572,7 @@ impl ExportEngine {
         html.push_str("<h1>Sequential Thinking Session</h1>\n");
 
         // Session information
-        html.push_str(&format!("<div class=\"session-info\">\n"));
+        html.push_str("<div class=\"session-info\">\n");
         html.push_str(&format!(
             "<p><strong>Session ID:</strong> {}</p>\n",
             data.session.session_id
@@ -583,8 +585,7 @@ impl ExportEngine {
             ));
             if let Some(ref description) = metadata.description {
                 html.push_str(&format!(
-                    "<p><strong>Description:</strong> {}</p>\n",
-                    description
+                    "<p><strong>Description:</strong> {description}</p>\n"
                 ));
             }
             html.push_str(&format!(
@@ -603,7 +604,7 @@ impl ExportEngine {
         html.push_str("<div class=\"thoughts\">\n");
 
         for (i, thought) in data.session.thoughts.iter().enumerate() {
-            let thought_number = i + 1;
+            let _thought_number = i + 1;
             let css_class = if thought.is_revision() {
                 "thought revision"
             } else if thought.is_branch() {
@@ -612,7 +613,7 @@ impl ExportEngine {
                 "thought"
             };
 
-            html.push_str(&format!("<div class=\"{}\">\n", css_class));
+            html.push_str(&format!("<div class=\"{css_class}\">\n"));
             html.push_str(&format!(
                 "<h3>Thought {}/{}</h3>\n",
                 thought.thought_number, thought.total_thoughts
@@ -630,8 +631,7 @@ impl ExportEngine {
             if thought.is_revision() {
                 if let Some(revises_thought) = thought.revises_thought {
                     html.push_str(&format!(
-                        "<p class=\"revision-note\">Revises thought {}</p>\n",
-                        revises_thought
+                        "<p class=\"revision-note\">Revises thought {revises_thought}</p>\n"
                     ));
                 }
             }
@@ -639,8 +639,7 @@ impl ExportEngine {
             if thought.is_branch() {
                 if let Some(branch_id) = &thought.branch_id {
                     html.push_str(&format!(
-                        "<p class=\"branch-note\">Branch ID: {}</p>\n",
-                        branch_id
+                        "<p class=\"branch-note\">Branch ID: {branch_id}</p>\n"
                     ));
                 }
             }
@@ -699,15 +698,7 @@ impl ExportEngine {
                 .unwrap_or_default();
 
             csv.push_str(&format!(
-                "\"{}\",\"{}\",\"{}\",\"{}\",\"{}\",\"{}\",\"{}\",\"{}\"\n",
-                thought_number,
-                total_thoughts,
-                content,
-                is_revision,
-                revises_thought,
-                is_branch,
-                branch_id,
-                timestamp
+                "\"{thought_number}\",\"{total_thoughts}\",\"{content}\",\"{is_revision}\",\"{revises_thought}\",\"{is_branch}\",\"{branch_id}\",\"{timestamp}\"\n"
             ));
         }
 
@@ -798,7 +789,7 @@ impl std::str::FromStr for ExportFormat {
             "csv" => Ok(ExportFormat::Csv),
             "yaml" | "yml" => Ok(ExportFormat::Yaml),
             "toml" => Ok(ExportFormat::Toml),
-            _ => Err(format!("Unknown export format: {}", s)),
+            _ => Err(format!("Unknown export format: {s}")),
         }
     }
 }
