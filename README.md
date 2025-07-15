@@ -3,6 +3,9 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/techgopal/ultrafast-mcp-sequential-thinking)](https://hub.docker.com/r/techgopal/ultrafast-mcp-sequential-thinking)
 [![Docker Image](https://img.shields.io/badge/docker-image-blue)](https://hub.docker.com/r/techgopal/ultrafast-mcp-sequential-thinking)
 
+[![Crates.io](https://img.shields.io/crates/v/ultrafast-mcp-sequential-thinking)](https://crates.io/crates/ultrafast-mcp-sequential-thinking)
+[![Crates.io Downloads](https://img.shields.io/crates/d/ultrafast-mcp-sequential-thinking)](https://crates.io/crates/ultrafast-mcp-sequential-thinking)
+
 **Official Docker image available at [`techgopal/ultrafast-mcp-sequential-thinking`](https://hub.docker.com/r/techgopal/ultrafast-mcp-sequential-thinking)**
 
 ---
@@ -81,7 +84,51 @@ UltraFast MCP Sequential Thinking provides a structured approach to problem-solv
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## ��️ Installation
+## 🛠️ Installation
+
+### Prerequisites
+- Rust 1.70 or later
+- Cargo (Rust package manager)
+
+### Quick Start
+
+#### 1. Clone the Repository
+```bash
+git clone https://github.com/your-org/ultrafast-mcp-sequential-thinking.git
+cd ultrafast-mcp-sequential-thinking
+```
+
+#### 2. Build the Project
+```bash
+cargo build --release
+```
+
+#### 3. Run the Server
+```bash
+# STDIO transport (default)
+cargo run --bin sequential-thinking-server
+
+# HTTP transport
+cargo run --bin sequential-thinking-server -- --transport http --port 8080
+```
+
+#### 4. Run the Client
+```bash
+# Connect to server
+cargo run --bin sequential-thinking-client -- --server stdio://
+
+# Connect to HTTP server
+cargo run --bin sequential-thinking-client -- --server http://localhost:8080
+```
+
+#### 5. Use MCP Inspector (Optional)
+```bash
+# Start HTTP server for Inspector
+cargo run --bin sequential-thinking-server -- --transport http --port 8080
+
+# Open MCP Inspector and load mcp-inspector-config.json
+# Choose "sequential-thinking-server-http" for HTTP transport
+```
 
 ### Quick Start with Docker
 
@@ -170,50 +217,6 @@ docker-compose up -d
 
 # Stop the service
 docker-compose down
-```
-
-### Prerequisites
-- Rust 1.70 or later
-- Cargo (Rust package manager)
-
-### Quick Start
-
-#### 1. Clone the Repository
-```bash
-git clone https://github.com/your-org/ultrafast-mcp-sequential-thinking.git
-cd ultrafast-mcp-sequential-thinking
-```
-
-#### 2. Build the Project
-```bash
-cargo build --release
-```
-
-#### 3. Run the Server
-```bash
-# STDIO transport (default)
-cargo run --bin sequential-thinking-server
-
-# HTTP transport
-cargo run --bin sequential-thinking-server -- --transport http --port 8080
-```
-
-#### 4. Run the Client
-```bash
-# Connect to server
-cargo run --bin sequential-thinking-client -- --server stdio://
-
-# Connect to HTTP server
-cargo run --bin sequential-thinking-client -- --server http://localhost:8080
-```
-
-#### 5. Use MCP Inspector (Optional)
-```bash
-# Start HTTP server for Inspector
-cargo run --bin sequential-thinking-server -- --transport http --port 8080
-
-# Open MCP Inspector and load mcp-inspector-config.json
-# Choose "sequential-thinking-server-http" for HTTP transport
 ```
 
 ## 🔧 Configuration
