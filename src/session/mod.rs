@@ -87,7 +87,10 @@ pub struct ThinkingSession {
 impl ThinkingSession {
     /// Create a new thinking session
     pub fn new(session_id: String, title: String) -> Self {
-        let metadata = SessionMetadata { title, ..Default::default() };
+        let metadata = SessionMetadata {
+            title,
+            ..Default::default()
+        };
 
         Self {
             session_id,

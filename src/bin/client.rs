@@ -7,12 +7,10 @@
 
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
-use tracing::{info};
+use tracing::info;
 use tracing_subscriber::EnvFilter;
 
-use ultrafast_mcp_sequential_thinking::{
-    SequentialThinkingClient,
-};
+use ultrafast_mcp_sequential_thinking::SequentialThinkingClient;
 
 /// Command-line arguments for the sequential thinking client
 #[derive(Parser)]
@@ -409,9 +407,7 @@ impl ClientApp {
                     println!("  quit - End session");
                 }
                 _ => {
-                    println!(
-                        "❌ Unknown command: {command}. Type 'help' for available commands."
-                    );
+                    println!("❌ Unknown command: {command}. Type 'help' for available commands.");
                 }
             }
         }
@@ -631,8 +627,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 // Create client and export session
                 let app = ClientApp::new(&args).await?;
-                app.export_session(session_id, format, output.clone())
-                    .await
+                app.export_session(session_id, format, output.clone()).await
             }
             Commands::Analyze { session_id } => {
                 // Initialize logging

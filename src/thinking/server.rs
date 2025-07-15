@@ -8,7 +8,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{info};
+use tracing::info;
 
 use ultrafast_mcp::{
     ListToolsRequest, ListToolsResponse, MCPError, MCPResult, ServerCapabilities, ServerInfo, Tool,
@@ -473,7 +473,9 @@ impl SequentialThinkingToolHandler {
                 let total_thoughts = thought["totalThoughts"].as_u64().unwrap_or(0);
                 let thought_content = thought["thought"].as_str().unwrap_or("");
 
-                markdown.push_str(&format!("### Thought {thought_number}/{total_thoughts}\n\n"));
+                markdown.push_str(&format!(
+                    "### Thought {thought_number}/{total_thoughts}\n\n"
+                ));
                 markdown.push_str(&format!("{thought_content}\n\n"));
 
                 if thought["isRevision"].as_bool().unwrap_or(false) {

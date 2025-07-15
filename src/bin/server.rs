@@ -7,7 +7,7 @@
 
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
-use tracing::{info, error};
+use tracing::{error, info};
 use tracing_subscriber::EnvFilter;
 
 use ultrafast_mcp::{ServerCapabilities, ServerInfo, ToolsCapability};

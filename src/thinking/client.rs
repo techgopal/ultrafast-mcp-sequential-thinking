@@ -8,11 +8,11 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{info};
+use tracing::info;
 
 use ultrafast_mcp::{
-    ClientCapabilities, ClientInfo, ListToolsRequest, Tool, ToolCall,
-    ToolContent, ToolResult, UltraFastClient,
+    ClientCapabilities, ClientInfo, ListToolsRequest, Tool, ToolCall, ToolContent, ToolResult,
+    UltraFastClient,
 };
 
 use crate::thinking::error::{SequentialThinkingError, SequentialThinkingResult};
