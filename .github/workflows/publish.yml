@@ -18,12 +18,6 @@ jobs:
           override: true
       - name: Dry run cargo publish
         run: cargo publish --manifest-path ./Cargo.toml --dry-run
-      # NOTE: To publish to GitHub Packages, ensure .cargo/config has a [registries.github] section.
-      - name: Publish to GitHub Packages (ghcr.io)
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          cargo publish --manifest-path ./Cargo.toml --registry github
       - name: Publish to crates.io (optional)
         if: env.CRATES_IO_TOKEN != null && env.CRATES_IO_TOKEN != ''
         env:
