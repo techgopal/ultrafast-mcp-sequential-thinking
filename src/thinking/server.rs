@@ -65,12 +65,12 @@ impl SequentialThinkingServer {
                     "High-performance Rust-based MCP server for sequential thinking".to_string(),
                 ),
                 homepage: Some(
-                    "https://github.com/your-org/ultrafast-mcp-sequential-thinking".to_string(),
+                    "https://github.com/techgopal/ultrafast-mcp-sequential-thinking".to_string(),
                 ),
                 repository: Some(
-                    "https://github.com/your-org/ultrafast-mcp-sequential-thinking".to_string(),
+                    "https://github.com/techgopal/ultrafast-mcp-sequential-thinking".to_string(),
                 ),
-                authors: Some(vec!["Your Name <your.email@example.com>".to_string()]),
+                authors: Some(vec!["techgopal <techgopal2@gmail.com>".to_string()]),
                 license: Some("MIT".to_string()),
             },
             capabilities: ServerCapabilities {
