@@ -1,10 +1,8 @@
 # UltraFast MCP Sequential Thinking
 
-[![Docker Pulls](https://img.shields.io/docker/pulls/techgopal/ultrafast-mcp-sequential-thinking)](https://hub.docker.com/r/techgopal/ultrafast-mcp-sequential-thinking)
 [![Docker Image](https://img.shields.io/badge/docker-image-blue)](https://hub.docker.com/r/techgopal/ultrafast-mcp-sequential-thinking)
-
 [![Crates.io](https://img.shields.io/crates/v/ultrafast-mcp-sequential-thinking)](https://crates.io/crates/ultrafast-mcp-sequential-thinking)
-[![Crates.io Downloads](https://img.shields.io/crates/d/ultrafast-mcp-sequential-thinking)](https://crates.io/crates/ultrafast-mcp-sequential-thinking)
+
 
 **Official Docker image available at [`techgopal/ultrafast-mcp-sequential-thinking`](https://hub.docker.com/r/techgopal/ultrafast-mcp-sequential-thinking)**
 
