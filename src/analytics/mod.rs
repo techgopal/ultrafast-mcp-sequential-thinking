@@ -858,10 +858,12 @@ mod tests {
             ThoughtData::new("Third thought".to_string(), 3, 3),
         ];
 
-        let mut stats = ThinkingStats::default();
-        stats.total_thoughts = thoughts.len() as u64;
+        let stats = ThinkingStats {
+            total_thoughts: thoughts.len() as u64,
+            total_thought_length: thoughts.iter().map(|t| t.thought.len() as u64).sum(),
+            ..ThinkingStats::default()
+        };
         let progress = ThinkingProgress::new(3, 3);
-        stats.total_thought_length = thoughts.iter().map(|t| t.thought.len() as u64).sum();
         let metrics = engine.calculate_basic_metrics(&stats, &progress);
 
         assert_eq!(metrics.total_thoughts, 3);
