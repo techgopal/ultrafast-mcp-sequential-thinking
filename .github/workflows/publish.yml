@@ -17,16 +17,16 @@ jobs:
           toolchain: stable
           override: true
       - name: Dry run cargo publish
-        run: cargo publish --manifest-path ultrafast-mcp-sequential-thinking/Cargo.toml --dry-run
+        run: cargo publish --manifest-path ./Cargo.toml --dry-run
       # NOTE: To publish to GitHub Packages, ensure .cargo/config has a [registries.github] section.
       - name: Publish to GitHub Packages (ghcr.io)
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cargo publish --manifest-path ultrafast-mcp-sequential-thinking/Cargo.toml --registry github
+          cargo publish --manifest-path ./Cargo.toml --registry github
       - name: Publish to crates.io (optional)
         if: env.CRATES_IO_TOKEN != null && env.CRATES_IO_TOKEN != ''
         env:
           CARGO_REGISTRY_TOKEN: ${{ env.CRATES_IO_TOKEN }}
         run: |
-          cargo publish --manifest-path ultrafast-mcp-sequential-thinking/Cargo.toml 
+          cargo publish --manifest-path ./Cargo.toml 
