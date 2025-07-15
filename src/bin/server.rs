@@ -10,7 +10,7 @@ use std::path::PathBuf;
 use tracing::{error, info, warn};
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
-use ultrafast_mcp::{ServerInfo, ServerCapabilities, ToolsCapability};
+use ultrafast_mcp::{ServerCapabilities, ServerInfo, ToolsCapability};
 use ultrafast_mcp_sequential_thinking::{
     default_server_config, SequentialThinkingServer, ServerConfig,
 };
@@ -130,14 +130,22 @@ impl ServerApp {
             ServerInfo {
                 name: config.name.clone(),
                 version: config.version.clone(),
-                description: Some("High-performance Rust-based MCP server for sequential thinking".to_string()),
-                homepage: Some("https://github.com/your-org/ultrafast-mcp-sequential-thinking".to_string()),
-                repository: Some("https://github.com/your-org/ultrafast-mcp-sequential-thinking".to_string()),
+                description: Some(
+                    "High-performance Rust-based MCP server for sequential thinking".to_string(),
+                ),
+                homepage: Some(
+                    "https://github.com/your-org/ultrafast-mcp-sequential-thinking".to_string(),
+                ),
+                repository: Some(
+                    "https://github.com/your-org/ultrafast-mcp-sequential-thinking".to_string(),
+                ),
                 authors: Some(vec!["Your Name <your.email@example.com>".to_string()]),
                 license: Some("MIT".to_string()),
             },
             ServerCapabilities {
-                tools: Some(ToolsCapability { list_changed: Some(true) }),
+                tools: Some(ToolsCapability {
+                    list_changed: Some(true),
+                }),
                 ..Default::default()
             },
             args.disable_logging,
@@ -149,7 +157,7 @@ impl ServerApp {
     /// Load configuration from file
     fn load_config_from_file(path: &PathBuf) -> Result<ServerConfig, Box<dyn std::error::Error>> {
         let content = std::fs::read_to_string(path)?;
-        
+
         if path.extension().and_then(|s| s.to_str()) == Some("toml") {
             let config: toml::Value = toml::from_str(&content)?;
             if let Some(server) = config.get("server") {
@@ -174,39 +182,39 @@ impl ServerApp {
         if !args.transport.is_empty() {
             config.transport = args.transport.clone();
         }
-        
+
         if args.port != 0 {
             config.port = args.port;
         }
-        
+
         if let Some(ref name) = args.name {
             config.name = name.clone();
         }
-        
+
         if args.enable_analytics {
             config.analytics.enabled = true;
         }
-        
+
         if let Some(ref endpoint) = args.analytics_endpoint {
             config.analytics.endpoint = endpoint.clone();
         }
-        
+
         if let Some(max_thoughts) = args.max_thoughts {
             config.thinking.max_thoughts_per_session = max_thoughts;
         }
-        
+
         if let Some(max_branches) = args.max_branches {
             config.thinking.max_branches_per_session = max_branches;
         }
-        
+
         if let Some(timeout) = args.session_timeout {
             config.thinking.session_timeout_seconds = timeout;
         }
-        
+
         if args.rate_limiting {
             config.security.rate_limiting_enabled = true;
         }
-        
+
         if let Some(requests_per_minute) = args.requests_per_minute {
             config.thinking.rate_limiting.requests_per_minute = requests_per_minute;
         }
@@ -215,8 +223,8 @@ impl ServerApp {
     /// Initialize logging
     fn init_logging(args: &Args) -> Result<(), Box<dyn std::error::Error>> {
         // Set up logging
-        let env_filter = EnvFilter::try_from_default_env()
-            .unwrap_or_else(|_| EnvFilter::new(&args.log_level));
+        let env_filter =
+            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(&args.log_level));
 
         let mut builder = tracing_subscriber::fmt()
             .with_env_filter(env_filter)
@@ -240,16 +248,28 @@ impl ServerApp {
         info!("Starting UltraFast MCP Sequential Thinking Server");
         info!("Server: {} v{}", self.config.name, self.config.version);
         info!("Transport: {}", self.config.transport);
-        
+
         if self.config.transport == "http" {
             info!("Port: {}", self.config.port);
         }
-        
-        info!("Max thoughts per session: {}", self.config.thinking.max_thoughts_per_session);
-        info!("Max branches per session: {}", self.config.thinking.max_branches_per_session);
-        info!("Session timeout: {} seconds", self.config.thinking.session_timeout_seconds);
+
+        info!(
+            "Max thoughts per session: {}",
+            self.config.thinking.max_thoughts_per_session
+        );
+        info!(
+            "Max branches per session: {}",
+            self.config.thinking.max_branches_per_session
+        );
+        info!(
+            "Session timeout: {} seconds",
+            self.config.thinking.session_timeout_seconds
+        );
         info!("Analytics enabled: {}", self.config.analytics.enabled);
-        info!("Rate limiting enabled: {}", self.config.security.rate_limiting_enabled);
+        info!(
+            "Rate limiting enabled: {}",
+            self.config.security.rate_limiting_enabled
+        );
 
         // Create MCP server
         let mcp_server = self.server.clone().create_mcp_server();
@@ -261,8 +281,13 @@ impl ServerApp {
                 mcp_server.run_stdio().await?;
             }
             "http" => {
-                info!("Running server with HTTP transport on port {}", self.config.port);
-                mcp_server.run_streamable_http("0.0.0.0", self.config.port).await?;
+                info!(
+                    "Running server with HTTP transport on port {}",
+                    self.config.port
+                );
+                mcp_server
+                    .run_streamable_http("0.0.0.0", self.config.port)
+                    .await?;
             }
             _ => {
                 return Err(format!("Unsupported transport: {}", self.config.transport).into());
@@ -307,15 +332,18 @@ impl ServerApp {
     fn generate_config(output_path: &PathBuf) -> Result<(), Box<dyn std::error::Error>> {
         let config = default_server_config();
         let config_json = serde_json::to_string_pretty(&config)?;
-        
+
         // Ensure output directory exists
         if let Some(parent) = output_path.parent() {
             std::fs::create_dir_all(parent)?;
         }
-        
+
         std::fs::write(output_path, config_json)?;
-        info!("Generated default configuration at: {}", output_path.display());
-        
+        info!(
+            "Generated default configuration at: {}",
+            output_path.display()
+        );
+
         Ok(())
     }
 
@@ -329,18 +357,33 @@ impl ServerApp {
         println!("Port: {}", self.config.port);
         println!();
         println!("Configuration:");
-        println!("  Max thoughts per session: {}", self.config.thinking.max_thoughts_per_session);
-        println!("  Max branches per session: {}", self.config.thinking.max_branches_per_session);
-        println!("  Session timeout: {} seconds", self.config.thinking.session_timeout_seconds);
+        println!(
+            "  Max thoughts per session: {}",
+            self.config.thinking.max_thoughts_per_session
+        );
+        println!(
+            "  Max branches per session: {}",
+            self.config.thinking.max_branches_per_session
+        );
+        println!(
+            "  Session timeout: {} seconds",
+            self.config.thinking.session_timeout_seconds
+        );
         println!("  Analytics enabled: {}", self.config.analytics.enabled);
-        println!("  Rate limiting enabled: {}", self.config.security.rate_limiting_enabled);
-        println!("  Thought logging enabled: {}", !self.config.thinking.enable_thought_logging);
+        println!(
+            "  Rate limiting enabled: {}",
+            self.config.security.rate_limiting_enabled
+        );
+        println!(
+            "  Thought logging enabled: {}",
+            !self.config.thinking.enable_thought_logging
+        );
     }
 
     /// Run health check
     async fn health_check(&self) -> Result<(), Box<dyn std::error::Error>> {
         let stats = self.server.get_stats().await;
-        
+
         println!("Health Check Results");
         println!("===================");
         println!("Status: OK");
@@ -349,7 +392,7 @@ impl ServerApp {
         println!("Total sessions: {}", stats.total_sessions);
         println!("Error count: {}", stats.error_count);
         println!("Average response time: {:.2}ms", stats.avg_response_time_ms);
-        
+
         Ok(())
     }
 }
@@ -361,35 +404,34 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Handle subcommands first
     if let Some(ref command) = args.command {
         match command {
-            Commands::Validate { config } => {
-                match ServerApp::load_config_from_file(&config) {
-                    Ok(mut server_config) => {
-                        let server = SequentialThinkingServer::new();
-                        let app = ServerApp { config: server_config, server };
-                        
-                        match app.validate_config() {
-                            Ok(()) => {
-                                println!("Configuration is valid");
-                                Ok(())
+            Commands::Validate { config } => match ServerApp::load_config_from_file(&config) {
+                Ok(mut server_config) => {
+                    let server = SequentialThinkingServer::new();
+                    let app = ServerApp {
+                        config: server_config,
+                        server,
+                    };
+
+                    match app.validate_config() {
+                        Ok(()) => {
+                            println!("Configuration is valid");
+                            Ok(())
+                        }
+                        Err(errors) => {
+                            println!("Configuration validation failed:");
+                            for error in errors {
+                                println!("  - {}", error);
                             }
-                            Err(errors) => {
-                                println!("Configuration validation failed:");
-                                for error in errors {
-                                    println!("  - {}", error);
-                                }
-                                Err("Configuration validation failed".into())
-                            }
+                            Err("Configuration validation failed".into())
                         }
                     }
-                    Err(e) => {
-                        error!("Failed to load configuration: {}", e);
-                        Err(e)
-                    }
                 }
-            }
-            Commands::Generate { output } => {
-                ServerApp::generate_config(&output)
-            }
+                Err(e) => {
+                    error!("Failed to load configuration: {}", e);
+                    Err(e)
+                }
+            },
+            Commands::Generate { output } => ServerApp::generate_config(&output),
             Commands::Info => {
                 let app = ServerApp::new(&args)?;
                 app.show_info();
@@ -406,7 +448,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         // Create and run server
         let app = ServerApp::new(&args)?;
-        
+
         // Validate configuration
         if let Err(errors) = app.validate_config() {
             error!("Configuration validation failed:");
@@ -419,4 +461,4 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // Run the server
         app.run().await
     }
-} 
+}

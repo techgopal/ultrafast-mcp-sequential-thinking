@@ -11,12 +11,12 @@ use tokio::sync::RwLock;
 use tracing::{error, info, warn};
 
 use ultrafast_mcp::{
-    UltraFastServer, ToolHandler, ToolCall, ToolResult, ToolContent, Tool, ListToolsRequest, ListToolsResponse,
-    ServerInfo, ServerCapabilities, ToolsCapability, MCPError, MCPResult,
+    ListToolsRequest, ListToolsResponse, MCPError, MCPResult, ServerCapabilities, ServerInfo, Tool,
+    ToolCall, ToolContent, ToolHandler, ToolResult, ToolsCapability, UltraFastServer,
 };
 
-use crate::thinking::{ThoughtData, ThinkingEngine, ThinkingStats};
 use crate::thinking::error::{SequentialThinkingError, SequentialThinkingResult};
+use crate::thinking::{ThinkingEngine, ThinkingStats, ThoughtData};
 
 #[derive(Debug, Clone)]
 pub struct SequentialThinkingServer {
@@ -126,14 +126,16 @@ impl SequentialThinkingServer {
             server: Arc::new(self),
         });
 
-        UltraFastServer::new(info, capabilities)
-            .with_tool_handler(tool_handler)
+        UltraFastServer::new(info, capabilities).with_tool_handler(tool_handler)
     }
 
     /// Process a thought using the main engine
-    pub async fn process_thought(&self, thought: ThoughtData) -> SequentialThinkingResult<ThoughtData> {
+    pub async fn process_thought(
+        &self,
+        thought: ThoughtData,
+    ) -> SequentialThinkingResult<ThoughtData> {
         let start_time = std::time::Instant::now();
-        
+
         // Update request statistics
         {
             let mut stats = self.stats.write().await;
@@ -151,9 +153,9 @@ impl SequentialThinkingServer {
             let response_time = start_time.elapsed();
             let mut stats = self.stats.write().await;
             stats.total_response_time_ms += response_time.as_millis() as u64;
-            stats.avg_response_time_ms = 
+            stats.avg_response_time_ms =
                 stats.total_response_time_ms as f64 / stats.total_requests as f64;
-            
+
             if result.is_ok() {
                 stats.total_thoughts += 1;
             } else {
@@ -169,12 +171,12 @@ impl SequentialThinkingServer {
         let mut sessions = self.sessions.write().await;
         let engine = ThinkingEngine::new();
         sessions.insert(session_id.clone(), engine);
-        
+
         {
             let mut stats = self.stats.write().await;
             stats.total_sessions += 1;
         }
-        
+
         info!("Created new thinking session: {}", session_id);
         Ok(())
     }
@@ -217,7 +219,10 @@ impl ToolHandler for SequentialThinkingToolHandler {
             "export_session" => self.handle_export_session(call).await,
             "analyze_session" => self.handle_analyze_session(call).await,
             "merge_sessions" => self.handle_merge_sessions(call).await,
-            _ => Err(MCPError::method_not_found(format!("Unknown tool: {}", call.name))),
+            _ => Err(MCPError::method_not_found(format!(
+                "Unknown tool: {}",
+                call.name
+            ))),
         }
     }
 
@@ -229,7 +234,10 @@ impl ToolHandler for SequentialThinkingToolHandler {
             create_merge_sessions_tool(),
         ];
 
-        Ok(ListToolsResponse { tools, next_cursor: None })
+        Ok(ListToolsResponse {
+            tools,
+            next_cursor: None,
+        })
     }
 }
 
@@ -237,16 +245,19 @@ impl SequentialThinkingToolHandler {
     /// Handle the main sequential thinking tool
     async fn handle_sequential_thinking(&self, call: ToolCall) -> MCPResult<ToolResult> {
         let start_time = std::time::Instant::now();
-        
+
         // Extract and validate arguments
         let args = call.arguments.ok_or_else(|| {
             MCPError::invalid_params("Missing arguments for sequential_thinking".to_string())
         })?;
 
         let thought_data = self.extract_thought_data(&args)?;
-        
+
         // Process the thought
-        let processed_thought = self.server.process_thought(thought_data).await
+        let processed_thought = self
+            .server
+            .process_thought(thought_data)
+            .await
             .map_err(|e| MCPError::internal_error(e.to_string()))?;
 
         // Get current progress and statistics
@@ -279,7 +290,9 @@ impl SequentialThinkingToolHandler {
         });
 
         Ok(ToolResult {
-            content: vec![ToolContent::text(serde_json::to_string_pretty(&response_data).unwrap())],
+            content: vec![ToolContent::text(
+                serde_json::to_string_pretty(&response_data).unwrap(),
+            )],
             is_error: Some(false),
         })
     }
@@ -290,7 +303,8 @@ impl SequentialThinkingToolHandler {
             MCPError::invalid_params("Missing arguments for export_session".to_string())
         })?;
 
-        let format = args.get("format")
+        let format = args
+            .get("format")
             .and_then(|v| v.as_str())
             .unwrap_or("json");
 
@@ -313,7 +327,12 @@ impl SequentialThinkingToolHandler {
         let content = match format {
             "json" => serde_json::to_string_pretty(&export_data).unwrap(),
             "markdown" => self.export_to_markdown(&export_data),
-            _ => return Err(MCPError::invalid_params(format!("Unsupported format: {}", format))),
+            _ => {
+                return Err(MCPError::invalid_params(format!(
+                    "Unsupported format: {}",
+                    format
+                )))
+            }
         };
 
         Ok(ToolResult {
@@ -333,7 +352,9 @@ impl SequentialThinkingToolHandler {
         let analysis = self.analyze_thinking_session(thoughts, branches, stats);
 
         Ok(ToolResult {
-            content: vec![ToolContent::text(serde_json::to_string_pretty(&analysis).unwrap())],
+            content: vec![ToolContent::text(
+                serde_json::to_string_pretty(&analysis).unwrap(),
+            )],
             is_error: Some(false),
         })
     }
@@ -344,7 +365,8 @@ impl SequentialThinkingToolHandler {
             MCPError::invalid_params("Missing arguments for merge_sessions".to_string())
         })?;
 
-        let session_ids = args.get("sessionIds")
+        let session_ids = args
+            .get("sessionIds")
             .and_then(|v| v.as_array())
             .ok_or_else(|| MCPError::invalid_params("Missing sessionIds array".to_string()))?;
 
@@ -370,36 +392,51 @@ impl SequentialThinkingToolHandler {
         });
 
         Ok(ToolResult {
-            content: vec![ToolContent::text(serde_json::to_string_pretty(&merge_result).unwrap())],
+            content: vec![ToolContent::text(
+                serde_json::to_string_pretty(&merge_result).unwrap(),
+            )],
             is_error: Some(false),
         })
     }
 
     /// Extract thought data from tool call arguments
     fn extract_thought_data(&self, args: &serde_json::Value) -> MCPResult<ThoughtData> {
-        let thought = args.get("thought")
+        let thought = args
+            .get("thought")
             .and_then(|v| v.as_str())
             .ok_or_else(|| MCPError::invalid_params("Missing 'thought' field".to_string()))?
             .to_string();
 
-        let thought_number = args.get("thoughtNumber")
+        let thought_number = args
+            .get("thoughtNumber")
             .and_then(|v| v.as_u64())
             .ok_or_else(|| MCPError::invalid_params("Missing 'thoughtNumber' field".to_string()))?
             as u32;
 
-        let total_thoughts = args.get("totalThoughts")
+        let total_thoughts = args
+            .get("totalThoughts")
             .and_then(|v| v.as_u64())
             .ok_or_else(|| MCPError::invalid_params("Missing 'totalThoughts' field".to_string()))?
             as u32;
 
-        let next_thought_needed = args.get("nextThoughtNeeded")
+        let next_thought_needed = args
+            .get("nextThoughtNeeded")
             .and_then(|v| v.as_bool())
             .unwrap_or(true);
 
         let is_revision = args.get("isRevision").and_then(|v| v.as_bool());
-        let revises_thought = args.get("revisesThought").and_then(|v| v.as_u64()).map(|v| v as u32);
-        let branch_from_thought = args.get("branchFromThought").and_then(|v| v.as_u64()).map(|v| v as u32);
-        let branch_id = args.get("branchId").and_then(|v| v.as_str()).map(|s| s.to_string());
+        let revises_thought = args
+            .get("revisesThought")
+            .and_then(|v| v.as_u64())
+            .map(|v| v as u32);
+        let branch_from_thought = args
+            .get("branchFromThought")
+            .and_then(|v| v.as_u64())
+            .map(|v| v as u32);
+        let branch_id = args
+            .get("branchId")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string());
         let needs_more_thoughts = args.get("needsMoreThoughts").and_then(|v| v.as_bool());
 
         Ok(ThoughtData {
@@ -421,43 +458,49 @@ impl SequentialThinkingToolHandler {
     fn export_to_markdown(&self, data: &serde_json::Value) -> String {
         let session = &data["session"];
         let thoughts = &session["thoughts"];
-        
+
         let mut markdown = String::new();
         markdown.push_str("# Sequential Thinking Session\n\n");
-        
+
         if let Some(session_id) = session["sessionId"].as_str() {
             markdown.push_str(&format!("**Session ID:** {}\n\n", session_id));
         }
-        
+
         markdown.push_str("## Thoughts\n\n");
-        
+
         if let Some(thoughts_array) = thoughts.as_array() {
             for (i, thought) in thoughts_array.iter().enumerate() {
                 let thought_number = thought["thoughtNumber"].as_u64().unwrap_or(0);
                 let total_thoughts = thought["totalThoughts"].as_u64().unwrap_or(0);
                 let thought_content = thought["thought"].as_str().unwrap_or("");
-                
-                markdown.push_str(&format!("### Thought {}/{}\n\n", thought_number, total_thoughts));
+
+                markdown.push_str(&format!(
+                    "### Thought {}/{}\n\n",
+                    thought_number, total_thoughts
+                ));
                 markdown.push_str(&format!("{}\n\n", thought_content));
-                
+
                 if thought["isRevision"].as_bool().unwrap_or(false) {
                     markdown.push_str("*This thought revises a previous thought*\n\n");
                 }
-                
+
                 if thought["branchFromThought"].is_number() {
                     markdown.push_str("*This thought is a branch*\n\n");
                 }
             }
         }
-        
+
         markdown.push_str("## Statistics\n\n");
         if let Some(stats) = session.get("stats") {
             markdown.push_str(&format!("- Total Thoughts: {}\n", stats["totalThoughts"]));
             markdown.push_str(&format!("- Total Revisions: {}\n", stats["totalRevisions"]));
             markdown.push_str(&format!("- Total Branches: {}\n", stats["totalBranches"]));
-            markdown.push_str(&format!("- Average Processing Time: {:.2}ms\n", stats["avgProcessingTimeMs"]));
+            markdown.push_str(&format!(
+                "- Average Processing Time: {:.2}ms\n",
+                stats["avgProcessingTimeMs"]
+            ));
         }
-        
+
         markdown
     }
 
@@ -471,7 +514,7 @@ impl SequentialThinkingToolHandler {
         let total_thoughts = thoughts.len();
         let revisions = thoughts.iter().filter(|t| t.is_revision()).count();
         let branch_thoughts = thoughts.iter().filter(|t| t.is_branch()).count();
-        
+
         let avg_thought_length = if total_thoughts > 0 {
             thoughts.iter().map(|t| t.thought.len()).sum::<usize>() as f64 / total_thoughts as f64
         } else {
@@ -519,7 +562,8 @@ Key features:
 - Generates a solution hypothesis
 - Verifies the hypothesis based on the Chain of Thought steps
 - Repeats the process until satisfied
-- Provides a correct answer".to_string(),
+- Provides a correct answer"
+            .to_string(),
         input_schema: serde_json::json!({
             "type": "object",
             "properties": {
@@ -652,12 +696,12 @@ mod tests {
     async fn test_thought_processing() {
         let server = SequentialThinkingServer::new();
         let thought = ThoughtData::new("Test thought".to_string(), 1, 3);
-        
+
         let result = server.process_thought(thought).await;
         assert!(result.is_ok());
-        
+
         let stats = server.get_stats().await;
         assert_eq!(stats.total_requests, 1);
         assert_eq!(stats.total_thoughts, 1);
     }
-} 
+}

@@ -5,11 +5,11 @@
 //! This module provides comprehensive analytics capabilities including
 //! session analysis, performance metrics, and insights generation.
 
+use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use chrono::{DateTime, Utc, Duration};
 
-use crate::thinking::{ThoughtData, ThinkingStats, ThinkingProgress};
+use crate::thinking::{ThinkingProgress, ThinkingStats, ThoughtData};
 
 /// Analytics configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -328,25 +328,25 @@ impl AnalyticsEngine {
         progress: &ThinkingProgress,
     ) -> SessionAnalytics {
         let analyzed_at = Utc::now();
-        
+
         // Calculate basic metrics
         let basic_metrics = self.calculate_basic_metrics(thoughts, stats, progress);
-        
+
         // Analyze thinking patterns
         let thinking_patterns = self.analyze_thinking_patterns(thoughts);
-        
+
         // Calculate performance metrics
         let performance_metrics = self.calculate_performance_metrics(stats);
-        
+
         // Calculate quality metrics
         let quality_metrics = self.calculate_quality_metrics(thoughts);
-        
+
         // Generate insights
         let insights = self.generate_insights(thoughts, &basic_metrics, &thinking_patterns);
-        
+
         // Generate recommendations
         let recommendations = self.generate_recommendations(&basic_metrics, &quality_metrics);
-        
+
         let analytics = SessionAnalytics {
             session_id: session_id.to_string(),
             session_title: session_title.to_string(),
@@ -358,13 +358,14 @@ impl AnalyticsEngine {
             insights,
             recommendations,
         };
-        
+
         // Store analytics data
-        self.analytics_data.insert(session_id.to_string(), analytics.clone());
-        
+        self.analytics_data
+            .insert(session_id.to_string(), analytics.clone());
+
         // Update aggregator
         self.update_aggregator(&analytics);
-        
+
         analytics
     }
 
@@ -378,31 +379,32 @@ impl AnalyticsEngine {
         let total_thoughts = thoughts.len() as u32;
         let total_revisions = thoughts.iter().filter(|t| t.is_revision()).count() as u32;
         let total_branches = thoughts.iter().filter(|t| t.is_branch()).count() as u32;
-        
-        let session_duration = if let (Some(first), Some(last)) = (thoughts.first(), thoughts.last()) {
-            if let (Some(first_time), Some(last_time)) = (first.timestamp, last.timestamp) {
-                (last_time - first_time).num_seconds() as u64
+
+        let session_duration =
+            if let (Some(first), Some(last)) = (thoughts.first(), thoughts.last()) {
+                if let (Some(first_time), Some(last_time)) = (first.timestamp, last.timestamp) {
+                    (last_time - first_time).num_seconds() as u64
+                } else {
+                    0
+                }
             } else {
                 0
-            }
-        } else {
-            0
-        };
-        
+            };
+
         let avg_thought_length = if total_thoughts > 0 {
             thoughts.iter().map(|t| t.thought.len()).sum::<usize>() as f64 / total_thoughts as f64
         } else {
             0.0
         };
-        
+
         let completion_rate = if progress.total_thoughts > 0 {
             progress.completed_thoughts as f64 / progress.total_thoughts as f64
         } else {
             0.0
         };
-        
+
         let efficiency_score = self.calculate_efficiency_score(thoughts, stats);
-        
+
         BasicMetrics {
             total_thoughts,
             total_revisions,
@@ -419,24 +421,24 @@ impl AnalyticsEngine {
         if thoughts.is_empty() {
             return 0.0;
         }
-        
+
         let revision_ratio = if stats.total_thoughts > 0 {
             stats.total_revisions as f64 / stats.total_thoughts as f64
         } else {
             0.0
         };
-        
+
         let branch_ratio = if stats.total_thoughts > 0 {
             stats.total_branches as f64 / stats.total_thoughts as f64
         } else {
             0.0
         };
-        
+
         // Efficiency decreases with more revisions and branches
         let base_score = 1.0;
         let revision_penalty = revision_ratio * 0.3;
         let branch_penalty = branch_ratio * 0.2;
-        
+
         (base_score - revision_penalty - branch_penalty).max(0.0)
     }
 
@@ -447,17 +449,17 @@ impl AnalyticsEngine {
         } else {
             0.0
         };
-        
+
         let branching_frequency = if thoughts.len() > 1 {
             thoughts.iter().filter(|t| t.is_branch()).count() as f64 / (thoughts.len() - 1) as f64
         } else {
             0.0
         };
-        
+
         let complexity_trend = self.analyze_complexity_trend(thoughts);
         let thinking_style = self.classify_thinking_style(thoughts);
         let common_patterns = self.identify_patterns(thoughts);
-        
+
         ThinkingPatterns {
             revision_frequency,
             branching_frequency,
@@ -472,16 +474,18 @@ impl AnalyticsEngine {
         if thoughts.len() < 3 {
             return ComplexityTrend::Stable;
         }
-        
+
         let complexities: Vec<usize> = thoughts.iter().map(|t| t.thought.len()).collect();
         let first_third = complexities.len() / 3;
         let last_third = complexities.len() - first_third;
-        
-        let avg_first = complexities[..first_third].iter().sum::<usize>() as f64 / first_third as f64;
-        let avg_last = complexities[last_third..].iter().sum::<usize>() as f64 / (complexities.len() - last_third) as f64;
-        
+
+        let avg_first =
+            complexities[..first_third].iter().sum::<usize>() as f64 / first_third as f64;
+        let avg_last = complexities[last_third..].iter().sum::<usize>() as f64
+            / (complexities.len() - last_third) as f64;
+
         let change_ratio = (avg_last - avg_first) / avg_first.max(1.0);
-        
+
         if change_ratio > 0.2 {
             ComplexityTrend::Increasing
         } else if change_ratio < -0.2 {
@@ -498,7 +502,7 @@ impl AnalyticsEngine {
         let revisions = thoughts.iter().filter(|t| t.is_revision()).count();
         let branches = thoughts.iter().filter(|t| t.is_branch()).count();
         let total = thoughts.len();
-        
+
         if revisions > total / 3 {
             ThinkingStyle::Iterative
         } else if branches > total / 4 {
@@ -515,7 +519,7 @@ impl AnalyticsEngine {
     /// Identify common patterns
     fn identify_patterns(&self, thoughts: &[ThoughtData]) -> Vec<Pattern> {
         let mut patterns = Vec::new();
-        
+
         // Pattern: Frequent revisions
         let revision_count = thoughts.iter().filter(|t| t.is_revision()).count();
         if revision_count > thoughts.len() / 4 {
@@ -526,7 +530,7 @@ impl AnalyticsEngine {
                 confidence: 0.8,
             });
         }
-        
+
         // Pattern: Branching exploration
         let branch_count = thoughts.iter().filter(|t| t.is_branch()).count();
         if branch_count > thoughts.len() / 5 {
@@ -537,7 +541,7 @@ impl AnalyticsEngine {
                 confidence: 0.7,
             });
         }
-        
+
         // Pattern: Linear progression
         if revision_count == 0 && branch_count == 0 && thoughts.len() > 3 {
             patterns.push(Pattern {
@@ -547,7 +551,7 @@ impl AnalyticsEngine {
                 confidence: 0.9,
             });
         }
-        
+
         patterns
     }
 
@@ -558,14 +562,14 @@ impl AnalyticsEngine {
         } else {
             0.0
         };
-        
+
         let mut response_time_distribution = HashMap::new();
         response_time_distribution.insert("fast".to_string(), 0);
         response_time_distribution.insert("medium".to_string(), 0);
         response_time_distribution.insert("slow".to_string(), 0);
-        
+
         let bottlenecks = Vec::new(); // Simplified for now
-        
+
         PerformanceMetrics {
             avg_processing_time_ms: stats.avg_processing_time_ms,
             total_processing_time_ms: stats.total_processing_time_ms,
@@ -581,11 +585,12 @@ impl AnalyticsEngine {
         let logical_flow_score = self.calculate_logical_flow_score(thoughts);
         let completeness_score = self.calculate_completeness_score(thoughts);
         let clarity_score = self.calculate_clarity_score(thoughts);
-        
-        let overall_quality_score = (coherence_score + logical_flow_score + completeness_score + clarity_score) / 4.0;
-        
+
+        let overall_quality_score =
+            (coherence_score + logical_flow_score + completeness_score + clarity_score) / 4.0;
+
         let quality_issues = self.identify_quality_issues(thoughts);
-        
+
         QualityMetrics {
             coherence_score,
             logical_flow_score,
@@ -601,21 +606,23 @@ impl AnalyticsEngine {
         if thoughts.len() < 2 {
             return 1.0;
         }
-        
+
         let mut coherence_score: f32 = 1.0;
-        
+
         for i in 1..thoughts.len() {
             let prev_thought = &thoughts[i - 1];
             let curr_thought = &thoughts[i];
-            
+
             // Check for logical connections
-            let has_connection = curr_thought.thought.to_lowercase().contains(&prev_thought.thought.to_lowercase()[..prev_thought.thought.len().min(10)]);
-            
+            let has_connection = curr_thought.thought.to_lowercase().contains(
+                &prev_thought.thought.to_lowercase()[..prev_thought.thought.len().min(10)],
+            );
+
             if !has_connection && !curr_thought.is_revision() && !curr_thought.is_branch() {
                 coherence_score -= 0.1;
             }
         }
-        
+
         coherence_score.max(0.0) as f64
     }
 
@@ -624,10 +631,10 @@ impl AnalyticsEngine {
         if thoughts.is_empty() {
             return 0.0;
         }
-        
+
         let mut flow_score: f32 = 1.0;
         let mut consecutive_revisions = 0;
-        
+
         for thought in thoughts {
             if thought.is_revision() {
                 consecutive_revisions += 1;
@@ -638,7 +645,7 @@ impl AnalyticsEngine {
                 consecutive_revisions = 0;
             }
         }
-        
+
         flow_score.max(0.0) as f64
     }
 
@@ -647,10 +654,11 @@ impl AnalyticsEngine {
         if thoughts.is_empty() {
             return 0.0;
         }
-        
-        let avg_length = thoughts.iter().map(|t| t.thought.len()).sum::<usize>() as f64 / thoughts.len() as f64;
+
+        let avg_length =
+            thoughts.iter().map(|t| t.thought.len()).sum::<usize>() as f64 / thoughts.len() as f64;
         let min_acceptable_length = 20.0;
-        
+
         if avg_length < min_acceptable_length {
             0.5
         } else if avg_length > 100.0 {
@@ -665,9 +673,9 @@ impl AnalyticsEngine {
         if thoughts.is_empty() {
             return 0.0;
         }
-        
+
         let mut clarity_score: f32 = 1.0;
-        
+
         for thought in thoughts {
             let words = thought.thought.split_whitespace().count();
             if words < 5 {
@@ -677,14 +685,14 @@ impl AnalyticsEngine {
                 clarity_score -= 0.05;
             }
         }
-        
+
         clarity_score.max(0.0) as f64
     }
 
     /// Identify quality issues
     fn identify_quality_issues(&self, thoughts: &[ThoughtData]) -> Vec<QualityIssue> {
         let mut issues = Vec::new();
-        
+
         for (i, thought) in thoughts.iter().enumerate() {
             if thought.thought.len() < 10 {
                 issues.push(QualityIssue {
@@ -694,7 +702,7 @@ impl AnalyticsEngine {
                     affected_thoughts: vec![i as u32 + 1],
                 });
             }
-            
+
             if thought.thought.len() > 1000 {
                 issues.push(QualityIssue {
                     issue_type: "long_thought".to_string(),
@@ -704,7 +712,7 @@ impl AnalyticsEngine {
                 });
             }
         }
-        
+
         issues
     }
 
@@ -716,27 +724,30 @@ impl AnalyticsEngine {
         thinking_patterns: &ThinkingPatterns,
     ) -> Vec<Insight> {
         let mut insights = Vec::new();
-        
+
         // Insight: High revision rate
         if thinking_patterns.revision_frequency > 0.3 {
             insights.push(Insight {
                 insight_type: "high_revision_rate".to_string(),
-                description: "High frequency of thought revisions suggests iterative thinking process".to_string(),
+                description:
+                    "High frequency of thought revisions suggests iterative thinking process"
+                        .to_string(),
                 confidence: 0.8,
                 supporting_data: HashMap::new(),
             });
         }
-        
+
         // Insight: Efficient thinking
         if basic_metrics.efficiency_score > 0.8 {
             insights.push(Insight {
                 insight_type: "efficient_thinking".to_string(),
-                description: "High efficiency score indicates effective problem-solving approach".to_string(),
+                description: "High efficiency score indicates effective problem-solving approach"
+                    .to_string(),
                 confidence: 0.9,
                 supporting_data: HashMap::new(),
             });
         }
-        
+
         // Insight: Exploratory thinking
         if thinking_patterns.branching_frequency > 0.2 {
             insights.push(Insight {
@@ -746,7 +757,7 @@ impl AnalyticsEngine {
                 supporting_data: HashMap::new(),
             });
         }
-        
+
         insights
     }
 
@@ -757,18 +768,19 @@ impl AnalyticsEngine {
         quality_metrics: &QualityMetrics,
     ) -> Vec<Recommendation> {
         let mut recommendations = Vec::new();
-        
+
         // Recommendation: Improve efficiency
         if basic_metrics.efficiency_score < 0.6 {
             recommendations.push(Recommendation {
                 recommendation_type: "improve_efficiency".to_string(),
-                description: "Consider reducing revisions and branches to improve efficiency".to_string(),
+                description: "Consider reducing revisions and branches to improve efficiency"
+                    .to_string(),
                 priority: Priority::High,
                 expected_impact: "20% improvement in efficiency".to_string(),
                 implementation_difficulty: Difficulty::Medium,
             });
         }
-        
+
         // Recommendation: Improve quality
         if quality_metrics.overall_quality_score < 0.7 {
             recommendations.push(Recommendation {
@@ -779,28 +791,36 @@ impl AnalyticsEngine {
                 implementation_difficulty: Difficulty::Easy,
             });
         }
-        
+
         recommendations
     }
 
     /// Update metrics aggregator
     fn update_aggregator(&mut self, analytics: &SessionAnalytics) {
         self.metrics_aggregator.total_sessions += 1;
-        
+
         let total_sessions = self.metrics_aggregator.total_sessions as f64;
-        
+
         // Update averages
-        self.metrics_aggregator.avg_session_duration = 
-            (self.metrics_aggregator.avg_session_duration * (total_sessions - 1.0) + analytics.basic_metrics.session_duration as f64) / total_sessions;
-        
-        self.metrics_aggregator.avg_thoughts_per_session = 
-            (self.metrics_aggregator.avg_thoughts_per_session * (total_sessions - 1.0) + analytics.basic_metrics.total_thoughts as f64) / total_sessions;
-        
-        self.metrics_aggregator.avg_revisions_per_session = 
-            (self.metrics_aggregator.avg_revisions_per_session * (total_sessions - 1.0) + analytics.basic_metrics.total_revisions as f64) / total_sessions;
-        
-        self.metrics_aggregator.avg_branches_per_session = 
-            (self.metrics_aggregator.avg_branches_per_session * (total_sessions - 1.0) + analytics.basic_metrics.total_branches as f64) / total_sessions;
+        self.metrics_aggregator.avg_session_duration =
+            (self.metrics_aggregator.avg_session_duration * (total_sessions - 1.0)
+                + analytics.basic_metrics.session_duration as f64)
+                / total_sessions;
+
+        self.metrics_aggregator.avg_thoughts_per_session =
+            (self.metrics_aggregator.avg_thoughts_per_session * (total_sessions - 1.0)
+                + analytics.basic_metrics.total_thoughts as f64)
+                / total_sessions;
+
+        self.metrics_aggregator.avg_revisions_per_session =
+            (self.metrics_aggregator.avg_revisions_per_session * (total_sessions - 1.0)
+                + analytics.basic_metrics.total_revisions as f64)
+                / total_sessions;
+
+        self.metrics_aggregator.avg_branches_per_session =
+            (self.metrics_aggregator.avg_branches_per_session * (total_sessions - 1.0)
+                + analytics.basic_metrics.total_branches as f64)
+                / total_sessions;
     }
 
     /// Get analytics for a session
@@ -849,12 +869,12 @@ mod tests {
             ThoughtData::new("Second thought".to_string(), 2, 3),
             ThoughtData::new("Third thought".to_string(), 3, 3),
         ];
-        
+
         let stats = ThinkingStats::default();
         let progress = ThinkingProgress::new(3, 3);
-        
+
         let metrics = engine.calculate_basic_metrics(&thoughts, &stats, &progress);
-        
+
         assert_eq!(metrics.total_thoughts, 3);
         assert_eq!(metrics.total_revisions, 0);
         assert_eq!(metrics.total_branches, 0);
@@ -869,9 +889,9 @@ mod tests {
             ThoughtData::revision("Revised thought".to_string(), 2, 1),
             ThoughtData::new("Third thought".to_string(), 3, 3),
         ];
-        
+
         let patterns = engine.analyze_thinking_patterns(&thoughts);
-        
+
         assert!(patterns.revision_frequency > 0.0);
         assert_eq!(patterns.revision_frequency, 0.5);
     }
@@ -880,16 +900,20 @@ mod tests {
     fn test_quality_metrics_calculation() {
         let engine = AnalyticsEngine::new();
         let thoughts = vec![
-            ThoughtData::new("This is a well-formed thought with sufficient detail".to_string(), 1, 3),
+            ThoughtData::new(
+                "This is a well-formed thought with sufficient detail".to_string(),
+                1,
+                3,
+            ),
             ThoughtData::new("Another comprehensive thought".to_string(), 2, 3),
         ];
-        
+
         let metrics = engine.calculate_quality_metrics(&thoughts);
-        
+
         assert!(metrics.coherence_score > 0.0);
         assert!(metrics.logical_flow_score > 0.0);
         assert!(metrics.completeness_score > 0.0);
         assert!(metrics.clarity_score > 0.0);
         assert!(metrics.overall_quality_score > 0.0);
     }
-} 
+}

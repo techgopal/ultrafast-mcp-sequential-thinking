@@ -11,11 +11,12 @@ use tokio::sync::RwLock;
 use tracing::{debug, error, info, warn};
 
 use ultrafast_mcp::{
-    UltraFastClient, ClientInfo, ClientCapabilities, ToolCall, ToolResult, ToolContent, Tool, ListToolsRequest, ListToolsResponse,
+    ClientCapabilities, ClientInfo, ListToolsRequest, ListToolsResponse, Tool, ToolCall,
+    ToolContent, ToolResult, UltraFastClient,
 };
 
-use crate::thinking::{ThoughtData, ThinkingEngine, ThinkingProgress, ThinkingStats};
 use crate::thinking::error::{SequentialThinkingError, SequentialThinkingResult};
+use crate::thinking::{ThinkingEngine, ThinkingProgress, ThinkingStats, ThoughtData};
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ClientThinkingConfig {
@@ -154,9 +155,15 @@ impl SequentialThinkingClient {
         let client_info = ClientInfo {
             name: "UltraFast MCP Sequential Thinking Client".to_string(),
             version: "0.1.0".to_string(),
-            description: Some("High-performance Rust-based MCP client for sequential thinking".to_string()),
-            homepage: Some("https://github.com/your-org/ultrafast-mcp-sequential-thinking".to_string()),
-            repository: Some("https://github.com/your-org/ultrafast-mcp-sequential-thinking".to_string()),
+            description: Some(
+                "High-performance Rust-based MCP client for sequential thinking".to_string(),
+            ),
+            homepage: Some(
+                "https://github.com/your-org/ultrafast-mcp-sequential-thinking".to_string(),
+            ),
+            repository: Some(
+                "https://github.com/your-org/ultrafast-mcp-sequential-thinking".to_string(),
+            ),
             authors: Some(vec!["Your Name <your.email@example.com>".to_string()]),
             license: Some("MIT".to_string()),
         };
@@ -185,9 +192,15 @@ impl SequentialThinkingClient {
         let client_info = ClientInfo {
             name: "UltraFast MCP Sequential Thinking Client".to_string(),
             version: "0.1.0".to_string(),
-            description: Some("High-performance Rust-based MCP client for sequential thinking".to_string()),
-            homepage: Some("https://github.com/your-org/ultrafast-mcp-sequential-thinking".to_string()),
-            repository: Some("https://github.com/your-org/ultrafast-mcp-sequential-thinking".to_string()),
+            description: Some(
+                "High-performance Rust-based MCP client for sequential thinking".to_string(),
+            ),
+            homepage: Some(
+                "https://github.com/your-org/ultrafast-mcp-sequential-thinking".to_string(),
+            ),
+            repository: Some(
+                "https://github.com/your-org/ultrafast-mcp-sequential-thinking".to_string(),
+            ),
             authors: Some(vec!["Your Name <your.email@example.com>".to_string()]),
             license: Some("MIT".to_string()),
         };
@@ -211,27 +224,43 @@ impl SequentialThinkingClient {
     /// Connect to the server and initialize MCP connection
     async fn connect(&mut self, server_url: &str) -> SequentialThinkingResult<()> {
         info!("Connecting to server: {}", server_url);
-        
+
         // Parse server URL to determine transport type
         if server_url.starts_with("stdio://") || server_url == "stdio" {
             // Connect via STDIO
-            self.client.connect_stdio().await
-                .map_err(|e| SequentialThinkingError::transport_error(format!("Failed to connect via STDIO: {}", e)))?;
+            self.client.connect_stdio().await.map_err(|e| {
+                SequentialThinkingError::transport_error(format!(
+                    "Failed to connect via STDIO: {}",
+                    e
+                ))
+            })?;
         } else if server_url.starts_with("http://") || server_url.starts_with("https://") {
             // Connect via HTTP
-            self.client.connect_streamable_http(server_url).await
-                .map_err(|e| SequentialThinkingError::transport_error(format!("Failed to connect via HTTP: {}", e)))?;
+            self.client
+                .connect_streamable_http(server_url)
+                .await
+                .map_err(|e| {
+                    SequentialThinkingError::transport_error(format!(
+                        "Failed to connect via HTTP: {}",
+                        e
+                    ))
+                })?;
         } else {
-            return Err(SequentialThinkingError::transport_error(
-                format!("Unsupported server URL format: {}", server_url)
-            ));
+            return Err(SequentialThinkingError::transport_error(format!(
+                "Unsupported server URL format: {}",
+                server_url
+            )));
         }
 
         info!("Connected to server, initializing MCP connection...");
-        
+
         // Initialize the MCP connection
-        self.client.initialize().await
-            .map_err(|e| SequentialThinkingError::transport_error(format!("Failed to initialize MCP connection: {}", e)))?;
+        self.client.initialize().await.map_err(|e| {
+            SequentialThinkingError::transport_error(format!(
+                "Failed to initialize MCP connection: {}",
+                e
+            ))
+        })?;
 
         info!("MCP connection initialized successfully");
         Ok(())
@@ -241,22 +270,22 @@ impl SequentialThinkingClient {
     pub async fn start_session(&self, title: String) -> SequentialThinkingResult<ThinkingSession> {
         let session_id = uuid::Uuid::new_v4().to_string();
         let mut session = ThinkingSession::new(session_id.clone(), title);
-        
+
         // Initialize the session
         session.engine.start_session(session_id.clone());
-        
+
         // Store the session
         {
             let mut sessions = self.sessions.write().await;
             sessions.insert(session_id.clone(), session.clone());
         }
-        
+
         // Update statistics
         {
             let mut stats = self.stats.write().await;
             stats.total_sessions += 1;
         }
-        
+
         info!("Started new thinking session: {}", session_id);
         Ok(session)
     }
@@ -274,7 +303,7 @@ impl SequentialThinkingClient {
         thought: ThoughtData,
     ) -> SequentialThinkingResult<ThoughtData> {
         let start_time = std::time::Instant::now();
-        
+
         // Update request statistics
         {
             let mut stats = self.stats.write().await;
@@ -283,23 +312,27 @@ impl SequentialThinkingClient {
 
         // Process thought locally first
         let mut sessions = self.sessions.write().await;
-        let session = sessions.get_mut(session_id)
-            .ok_or_else(|| SequentialThinkingError::not_found(format!("Session not found: {}", session_id)))?;
-        
-        let processed_thought = session.engine.process_thought(thought.clone()).await
+        let session = sessions.get_mut(session_id).ok_or_else(|| {
+            SequentialThinkingError::not_found(format!("Session not found: {}", session_id))
+        })?;
+
+        let processed_thought = session
+            .engine
+            .process_thought(thought.clone())
+            .await
             .map_err(|e| SequentialThinkingError::processing_error(e))?;
-        
+
         // Send thought to server
         let server_result = self.send_thought_to_server(thought).await;
-        
+
         // Update response time statistics
         {
             let response_time = start_time.elapsed();
             let mut stats = self.stats.write().await;
             stats.total_response_time_ms += response_time.as_millis() as u64;
-            stats.avg_response_time_ms = 
+            stats.avg_response_time_ms =
                 stats.total_response_time_ms as f64 / stats.total_requests as f64;
-            
+
             if server_result.is_ok() {
                 stats.total_thoughts += 1;
             } else {
@@ -314,12 +347,15 @@ impl SequentialThinkingClient {
 
         // Update session activity
         session.last_activity = chrono::Utc::now();
-        
+
         Ok(processed_thought)
     }
 
     /// Send a thought to the server
-    async fn send_thought_to_server(&self, thought: ThoughtData) -> SequentialThinkingResult<ToolResult> {
+    async fn send_thought_to_server(
+        &self,
+        thought: ThoughtData,
+    ) -> SequentialThinkingResult<ToolResult> {
         let args = serde_json::json!({
             "thought": thought.thought,
             "thoughtNumber": thought.thought_number,
@@ -346,16 +382,18 @@ impl SequentialThinkingClient {
                     if attempts >= self.config.max_retry_attempts {
                         return Err(SequentialThinkingError::transport_error(e.to_string()));
                     }
-                    
+
                     // Update retry statistics
                     {
                         let mut stats = self.stats.write().await;
                         stats.retry_count += 1;
                     }
-                    
-                    warn!("Tool call failed, retrying (attempt {}/{}): {}", 
-                          attempts, self.config.max_retry_attempts, e);
-                    
+
+                    warn!(
+                        "Tool call failed, retrying (attempt {}/{}): {}",
+                        attempts, self.config.max_retry_attempts, e
+                    );
+
                     // Wait before retrying
                     tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
                 }
@@ -378,15 +416,16 @@ impl SequentialThinkingClient {
             arguments: Some(args),
         };
 
-        let result = self.client.call_tool(tool_call).await
+        let result = self
+            .client
+            .call_tool(tool_call)
+            .await
             .map_err(|e| SequentialThinkingError::transport_error(e.to_string()))?;
 
         // Extract content from result
         if let Some(content) = result.content.first() {
             match content {
-                ToolContent::Text { text } => {
-                    Ok(text.clone())
-                }
+                ToolContent::Text { text } => Ok(text.clone()),
                 _ => Err(SequentialThinkingError::serialization_error(
                     "Unexpected content type in export result".to_string(),
                 )),
@@ -399,22 +438,26 @@ impl SequentialThinkingClient {
     }
 
     /// Analyze a session
-    pub async fn analyze_session(&self, session_id: &str) -> SequentialThinkingResult<serde_json::Value> {
+    pub async fn analyze_session(
+        &self,
+        session_id: &str,
+    ) -> SequentialThinkingResult<serde_json::Value> {
         let tool_call = ToolCall {
             name: "analyze_session".to_string(),
             arguments: Some(serde_json::json!({})),
         };
 
-        let result = self.client.call_tool(tool_call).await
+        let result = self
+            .client
+            .call_tool(tool_call)
+            .await
             .map_err(|e| SequentialThinkingError::transport_error(e.to_string()))?;
 
         // Extract content from result
         if let Some(content) = result.content.first() {
             match content {
-                ToolContent::Text { text } => {
-                    serde_json::from_str(text)
-                        .map_err(|e| SequentialThinkingError::serialization_error(e.to_string()))
-                }
+                ToolContent::Text { text } => serde_json::from_str(text)
+                    .map_err(|e| SequentialThinkingError::serialization_error(e.to_string())),
                 _ => Err(SequentialThinkingError::serialization_error(
                     "Unexpected content type in analysis result".to_string(),
                 )),
@@ -428,9 +471,12 @@ impl SequentialThinkingClient {
 
     /// Get available tools from the server
     pub async fn list_tools(&self) -> SequentialThinkingResult<Vec<Tool>> {
-        let tools = self.client.list_tools(ListToolsRequest { cursor: None }).await
+        let tools = self
+            .client
+            .list_tools(ListToolsRequest { cursor: None })
+            .await
             .map_err(|e| SequentialThinkingError::transport_error(e.to_string()))?;
-        
+
         Ok(tools.tools)
     }
 
@@ -449,12 +495,12 @@ impl SequentialThinkingClient {
     async fn update_progress_tracking(&self, thought: &ThoughtData) {
         let mut tracker = self.progress_tracker.write().await;
         let progress = self.calculate_progress(thought);
-        
+
         if let Some(ref current) = tracker.current_progress {
             let current = current.clone();
             tracker.progress_history.push(current);
         }
-        
+
         tracker.current_progress = Some(progress);
         tracker.last_update = chrono::Utc::now();
     }
@@ -473,7 +519,10 @@ impl SequentialThinkingClient {
             info!("Completed thinking session: {}", session_id);
             Ok(())
         } else {
-            Err(SequentialThinkingError::not_found(format!("Session not found: {}", session_id)))
+            Err(SequentialThinkingError::not_found(format!(
+                "Session not found: {}",
+                session_id
+            )))
         }
     }
 
@@ -504,7 +553,10 @@ impl SequentialThinkingClient {
     /// Check if a session is complete
     pub async fn is_session_complete(&self, session_id: &str) -> bool {
         let sessions = self.sessions.read().await;
-        sessions.get(session_id).map(|s| s.is_complete()).unwrap_or(false)
+        sessions
+            .get(session_id)
+            .map(|s| s.is_complete())
+            .unwrap_or(false)
     }
 }
 
@@ -575,9 +627,9 @@ mod tests {
 
         let thought = ThoughtData::new("Test thought".to_string(), 3, 5);
         let progress = client.calculate_progress(&thought);
-        
+
         assert_eq!(progress.current_thought, 3);
         assert_eq!(progress.total_thoughts, 5);
         assert_eq!(progress.completed_thoughts, 2);
     }
-} 
+}

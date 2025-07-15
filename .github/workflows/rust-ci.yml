@@ -1,0 +1,32 @@
+name: Rust CI
+
+on:
+  push:
+    branches: [master, main]
+    tags: ["v*"]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  rust-ci:
+    name: Rust Standard CI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+        working-directory: ./ultrafast-mcp-sequential-thinking
+      - name: Lint with clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+        working-directory: ./ultrafast-mcp-sequential-thinking
+      - name: Build
+        run: cargo build --workspace --all-targets --release
+        working-directory: ./ultrafast-mcp-sequential-thinking
+      - name: Test
+        run: cargo test --workspace --all-targets
+        working-directory: ./ultrafast-mcp-sequential-thinking 

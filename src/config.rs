@@ -160,7 +160,11 @@ pub struct ExportConfig {
 impl Default for ExportConfig {
     fn default() -> Self {
         Self {
-            formats: vec!["json".to_string(), "markdown".to_string(), "pdf".to_string()],
+            formats: vec![
+                "json".to_string(),
+                "markdown".to_string(),
+                "pdf".to_string(),
+            ],
             auto_export: false,
             export_directory: "./exports".to_string(),
             filename_template: "session_{session_id}_{timestamp}".to_string(),
@@ -344,10 +348,13 @@ impl ConfigManager {
     }
 
     /// Load configuration from file
-    pub fn load_from_file<P: AsRef<Path>>(&mut self, path: P) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn load_from_file<P: AsRef<Path>>(
+        &mut self,
+        path: P,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let path = path.as_ref();
         let content = std::fs::read_to_string(path)?;
-        
+
         if path.extension().and_then(|s| s.to_str()) == Some("toml") {
             self.load_from_toml(&content)?;
         } else if path.extension().and_then(|s| s.to_str()) == Some("json") {
@@ -355,7 +362,7 @@ impl ConfigManager {
         } else {
             return Err("Unsupported configuration file format".into());
         }
-        
+
         self.config_path = Some(path.to_string_lossy().to_string());
         Ok(())
     }
@@ -363,30 +370,30 @@ impl ConfigManager {
     /// Load configuration from TOML string
     pub fn load_from_toml(&mut self, content: &str) -> Result<(), Box<dyn std::error::Error>> {
         let config: toml::Value = toml::from_str(content)?;
-        
+
         if let Some(server) = config.get("server") {
             self.server_config = Some(server.clone().try_into()?);
         }
-        
+
         if let Some(client) = config.get("client") {
             self.client_config = Some(client.clone().try_into()?);
         }
-        
+
         Ok(())
     }
 
     /// Load configuration from JSON string
     pub fn load_from_json(&mut self, content: &str) -> Result<(), Box<dyn std::error::Error>> {
         let config: serde_json::Value = serde_json::from_str(content)?;
-        
+
         if let Some(server) = config.get("server") {
             self.server_config = Some(serde_json::from_value(server.clone())?);
         }
-        
+
         if let Some(client) = config.get("client") {
             self.client_config = Some(serde_json::from_value(client.clone())?);
         }
-        
+
         Ok(())
     }
 
@@ -394,27 +401,37 @@ impl ConfigManager {
     pub fn load_from_env(&mut self) {
         // Server configuration from environment
         if let Ok(name) = std::env::var("SEQUENTIAL_THINKING_SERVER_NAME") {
-            self.server_config.get_or_insert_with(ServerConfig::default).name = name;
+            self.server_config
+                .get_or_insert_with(ServerConfig::default)
+                .name = name;
         }
-        
+
         if let Ok(transport) = std::env::var("SEQUENTIAL_THINKING_TRANSPORT") {
-            self.server_config.get_or_insert_with(ServerConfig::default).transport = transport;
+            self.server_config
+                .get_or_insert_with(ServerConfig::default)
+                .transport = transport;
         }
-        
+
         if let Ok(port) = std::env::var("SEQUENTIAL_THINKING_PORT") {
             if let Ok(port_num) = port.parse::<u16>() {
-                self.server_config.get_or_insert_with(ServerConfig::default).port = port_num;
+                self.server_config
+                    .get_or_insert_with(ServerConfig::default)
+                    .port = port_num;
             }
         }
-        
+
         // Client configuration from environment
         if let Ok(server_url) = std::env::var("SEQUENTIAL_THINKING_SERVER_URL") {
-            self.client_config.get_or_insert_with(ClientConfig::default).server_url = server_url;
+            self.client_config
+                .get_or_insert_with(ClientConfig::default)
+                .server_url = server_url;
         }
-        
+
         if let Ok(timeout) = std::env::var("SEQUENTIAL_THINKING_TIMEOUT") {
             if let Ok(timeout_num) = timeout.parse::<u64>() {
-                self.client_config.get_or_insert_with(ClientConfig::default).timeout_seconds = timeout_num;
+                self.client_config
+                    .get_or_insert_with(ClientConfig::default)
+                    .timeout_seconds = timeout_num;
             }
         }
     }
@@ -446,43 +463,43 @@ impl ConfigManager {
             "server": self.server_config,
             "client": self.client_config
         });
-        
+
         let content = serde_json::to_string_pretty(&config)?;
         std::fs::write(path, content)?;
-        
+
         Ok(())
     }
 
     /// Validate configuration
     pub fn validate(&self) -> Result<(), Vec<String>> {
         let mut errors = Vec::new();
-        
+
         // Validate server configuration
         if let Some(ref server_config) = self.server_config {
             if server_config.name.is_empty() {
                 errors.push("Server name cannot be empty".to_string());
             }
-            
+
             if server_config.port == 0 {
                 errors.push("Server port must be greater than 0".to_string());
             }
-            
+
             if server_config.thinking.max_thoughts_per_session == 0 {
                 errors.push("Max thoughts per session must be greater than 0".to_string());
             }
         }
-        
+
         // Validate client configuration
         if let Some(ref client_config) = self.client_config {
             if client_config.server_url.is_empty() {
                 errors.push("Server URL cannot be empty".to_string());
             }
-            
+
             if client_config.timeout_seconds == 0 {
                 errors.push("Timeout must be greater than 0".to_string());
             }
         }
-        
+
         if errors.is_empty() {
             Ok(())
         } else {
@@ -504,7 +521,7 @@ pub mod utils {
     /// Load configuration from default locations
     pub fn load_default_config() -> Result<ConfigManager, Box<dyn std::error::Error>> {
         let mut manager = ConfigManager::new();
-        
+
         // Try to load from default config file
         let default_paths = [
             "./config.toml",
@@ -512,7 +529,7 @@ pub mod utils {
             "./sequential-thinking.toml",
             "./sequential-thinking.json",
         ];
-        
+
         for path in &default_paths {
             if std::path::Path::new(path).exists() {
                 if let Ok(()) = manager.load_from_file(path) {
@@ -520,18 +537,20 @@ pub mod utils {
                 }
             }
         }
-        
+
         // Load from environment variables
         manager.load_from_env();
-        
+
         // Validate configuration
         manager.validate();
-        
+
         Ok(manager)
     }
 
     /// Create a default configuration file
-    pub fn create_default_config<P: AsRef<Path>>(path: P) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn create_default_config<P: AsRef<Path>>(
+        path: P,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let mut manager = ConfigManager::new();
         manager.set_server_config(ServerConfig::default());
         manager.set_client_config(ClientConfig::default());
@@ -590,7 +609,7 @@ mod tests {
         let mut manager = ConfigManager::new();
         let server_config = ServerConfig::default();
         manager.set_server_config(server_config);
-        
+
         let loaded_config = manager.get_server_config();
         assert_eq!(loaded_config.name, "ultrafast-sequential-thinking");
     }
@@ -601,8 +620,8 @@ mod tests {
         let mut server_config = ServerConfig::default();
         server_config.name = String::new(); // Invalid
         manager.set_server_config(server_config);
-        
+
         let result = manager.validate();
         assert!(result.is_err());
     }
-} 
+}

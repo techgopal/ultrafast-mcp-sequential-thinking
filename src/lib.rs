@@ -57,7 +57,7 @@ pub mod thinking;
 
 // Re-export main types for convenience
 pub use session::{SessionManager, SessionMetadata, ThinkingSession};
-pub use thinking::{ThoughtData, ThoughtProcessor, ThinkingEngine};
+pub use thinking::{ThinkingEngine, ThoughtData, ThoughtProcessor};
 
 // Re-export client and server types
 pub use crate::thinking::client::SequentialThinkingClient;
@@ -120,4 +120,4 @@ mod tests {
         assert_eq!(client_config.server_url, "stdio://");
         assert_eq!(client_config.timeout_seconds, 30);
     }
-} 
+}

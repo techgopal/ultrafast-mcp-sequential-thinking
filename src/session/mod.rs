@@ -5,13 +5,13 @@
 //! This module provides session creation, management, and persistence
 //! capabilities for thinking sessions.
 
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::thinking::{ThoughtData, ThinkingEngine, ThinkingProgress, ThinkingStats};
+use crate::thinking::{ThinkingEngine, ThinkingProgress, ThinkingStats, ThoughtData};
 
 /// Session metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -89,7 +89,7 @@ impl ThinkingSession {
     pub fn new(session_id: String, title: String) -> Self {
         let mut metadata = SessionMetadata::default();
         metadata.title = title;
-        
+
         Self {
             session_id,
             metadata,
@@ -284,9 +284,12 @@ impl SessionManager {
     }
 
     /// Create a new session
-    pub async fn create_session(&self, title: String) -> Result<String, Box<dyn std::error::Error>> {
+    pub async fn create_session(
+        &self,
+        title: String,
+    ) -> Result<String, Box<dyn std::error::Error>> {
         let session_id = Uuid::new_v4().to_string();
-        
+
         // Check if we've reached the maximum number of sessions
         {
             let sessions = self.sessions.read().await;
@@ -294,21 +297,21 @@ impl SessionManager {
                 return Err("Maximum number of sessions reached".into());
             }
         }
-        
+
         let session = ThinkingSession::new(session_id.clone(), title);
-        
+
         {
             let mut sessions = self.sessions.write().await;
             sessions.insert(session_id.clone(), session);
         }
-        
+
         // Update statistics
         {
             let mut stats = self.stats.write().await;
             stats.total_sessions_created += 1;
             stats.active_sessions += 1;
         }
-        
+
         Ok(session_id)
     }
 
@@ -362,13 +365,13 @@ impl SessionManager {
     pub async fn cleanup_expired_sessions(&self) -> usize {
         let mut sessions = self.sessions.write().await;
         let mut expired_count = 0;
-        
+
         let expired_sessions: Vec<String> = sessions
             .iter()
             .filter(|(_, session)| session.is_expired())
             .map(|(id, _)| id.clone())
             .collect();
-        
+
         for session_id in expired_sessions {
             if let Some(session) = sessions.remove(&session_id) {
                 // Update statistics based on session status
@@ -382,7 +385,7 @@ impl SessionManager {
                 expired_count += 1;
             }
         }
-        
+
         expired_count
     }
 
@@ -391,24 +394,23 @@ impl SessionManager {
         let sessions = Arc::clone(&self.sessions);
         let config = self.config.clone();
         let stats = Arc::clone(&self.stats);
-        
+
         tokio::spawn(async move {
-            let mut interval = tokio::time::interval(
-                std::time::Duration::from_secs(config.cleanup_interval)
-            );
-            
+            let mut interval =
+                tokio::time::interval(std::time::Duration::from_secs(config.cleanup_interval));
+
             loop {
                 interval.tick().await;
-                
+
                 let mut sessions_guard = sessions.write().await;
                 let mut expired_count = 0;
-                
+
                 let expired_sessions: Vec<String> = sessions_guard
                     .iter()
                     .filter(|(_, session)| session.is_expired())
                     .map(|(id, _)| id.clone())
                     .collect();
-                
+
                 for session_id in expired_sessions {
                     if let Some(session) = sessions_guard.remove(&session_id) {
                         // Update statistics
@@ -422,7 +424,7 @@ impl SessionManager {
                         expired_count += 1;
                     }
                 }
-                
+
                 if expired_count > 0 {
                     tracing::info!("Cleaned up {} expired sessions", expired_count);
                 }
@@ -435,7 +437,7 @@ impl SessionManager {
         if !self.config.persist_sessions {
             return Ok(());
         }
-        
+
         let sessions = self.sessions.read().await;
         let sessions_data: HashMap<String, serde_json::Value> = sessions
             .iter()
@@ -448,15 +450,15 @@ impl SessionManager {
                 (id.clone(), session_data)
             })
             .collect();
-        
+
         let content = serde_json::to_string_pretty(&sessions_data)?;
-        
+
         // Ensure directory exists
         std::fs::create_dir_all(&self.config.persistence_dir)?;
-        
+
         let file_path = format!("{}/sessions.json", self.config.persistence_dir);
         std::fs::write(file_path, content)?;
-        
+
         Ok(())
     }
 
@@ -465,27 +467,30 @@ impl SessionManager {
         if !self.config.persist_sessions {
             return Ok(());
         }
-        
+
         let file_path = format!("{}/sessions.json", self.config.persistence_dir);
         if !std::path::Path::new(&file_path).exists() {
             return Ok(());
         }
-        
+
         let content = std::fs::read_to_string(file_path)?;
         let sessions_data: HashMap<String, serde_json::Value> = serde_json::from_str(&content)?;
-        
+
         let mut sessions = self.sessions.write().await;
         for (id, session_data) in sessions_data {
             // Reconstruct session from persisted data
             // This is a simplified implementation
             let metadata: SessionMetadata = serde_json::from_value(
-                session_data.get("metadata").unwrap_or(&serde_json::Value::Null).clone()
+                session_data
+                    .get("metadata")
+                    .unwrap_or(&serde_json::Value::Null)
+                    .clone(),
             )?;
-            
+
             let session = ThinkingSession::with_metadata(id.clone(), metadata);
             sessions.insert(id, session);
         }
-        
+
         Ok(())
     }
 }
@@ -511,28 +516,35 @@ mod tests {
 
     #[test]
     fn test_session_metadata() {
-        let mut session = ThinkingSession::new("test-session".to_string(), "Test Session".to_string());
-        
+        let mut session =
+            ThinkingSession::new("test-session".to_string(), "Test Session".to_string());
+
         session.set_priority(SessionPriority::High);
         assert_eq!(session.priority(), &SessionPriority::High);
-        
+
         session.add_tag("important".to_string());
         assert!(session.metadata.tags.contains(&"important".to_string()));
-        
+
         session.set_custom_data("key".to_string(), serde_json::json!("value"));
-        assert_eq!(session.get_custom_data("key"), Some(&serde_json::json!("value")));
+        assert_eq!(
+            session.get_custom_data("key"),
+            Some(&serde_json::json!("value"))
+        );
     }
 
     #[tokio::test]
     async fn test_session_manager() {
         let manager = SessionManager::new();
-        
-        let session_id = manager.create_session("Test Session".to_string()).await.unwrap();
+
+        let session_id = manager
+            .create_session("Test Session".to_string())
+            .await
+            .unwrap();
         assert!(!session_id.is_empty());
-        
+
         let session = manager.get_session(&session_id).await;
         assert!(session.is_some());
-        
+
         let session_ids = manager.list_session_ids().await;
         assert_eq!(session_ids.len(), 1);
         assert!(session_ids.contains(&session_id));
@@ -541,22 +553,25 @@ mod tests {
     #[tokio::test]
     async fn test_session_cleanup() {
         let manager = SessionManager::new();
-        
+
         // Create a session
-        let session_id = manager.create_session("Test Session".to_string()).await.unwrap();
-        
+        let session_id = manager
+            .create_session("Test Session".to_string())
+            .await
+            .unwrap();
+
         // Mark session as expired
         if let Some(mut session) = manager.get_session(&session_id).await {
             session.metadata.expires_at = Some(chrono::Utc::now() - chrono::Duration::hours(1));
             manager.update_session(&session_id, session).await;
         }
-        
+
         // Cleanup expired sessions
         let expired_count = manager.cleanup_expired_sessions().await;
         assert_eq!(expired_count, 1);
-        
+
         // Verify session is removed
         let session = manager.get_session(&session_id).await;
         assert!(session.is_none());
     }
-} 
+}

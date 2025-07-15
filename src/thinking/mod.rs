@@ -158,7 +158,9 @@ impl ThoughtData {
             // This is actually allowed for dynamic adjustment
         }
         if self.is_revision() && self.revises_thought.is_none() {
-            return Err("Revision thoughts must specify which thought is being revised".to_string());
+            return Err(
+                "Revision thoughts must specify which thought is being revised".to_string(),
+            );
         }
         if self.is_branch() && self.branch_id.is_none() {
             return Err("Branch thoughts must have a branch ID".to_string());
@@ -256,7 +258,7 @@ impl ThinkingProgress {
         self.total_thoughts = thought.total_thoughts;
         self.completed_thoughts = thought.thought_number.saturating_sub(1);
         self.needs_more_thoughts = thought.next_thought_needed;
-        
+
         self.progress_percentage = if self.total_thoughts > 0 {
             self.completed_thoughts as f64 / self.total_thoughts as f64
         } else {
@@ -275,10 +277,10 @@ impl ThinkingProgress {
 pub trait ThoughtProcessor: Send + Sync {
     /// Process a single thought
     async fn process_thought(&self, thought: ThoughtData) -> Result<ThoughtData, String>;
-    
+
     /// Validate a thought before processing
     async fn validate_thought(&self, thought: &ThoughtData) -> Result<(), String>;
-    
+
     /// Get processing statistics
     async fn get_stats(&self) -> Result<ThinkingStats, String>;
 }
@@ -363,52 +365,53 @@ impl ThinkingEngine {
     /// Process a thought and add it to the session
     pub async fn process_thought(&mut self, thought: ThoughtData) -> Result<ThoughtData, String> {
         let start_time = std::time::Instant::now();
-        
+
         // Validate the thought
         thought.validate()?;
-        
+
         // Adjust total thoughts if needed
         let mut processed_thought = thought.clone();
         if processed_thought.thought_number > processed_thought.total_thoughts {
             processed_thought.total_thoughts = processed_thought.thought_number;
         }
-        
+
         // Add to main thoughts
         self.thoughts.push(processed_thought.clone());
-        
+
         // Handle branching
         if let (Some(branch_from), Some(branch_id)) = (
             processed_thought.branch_from_thought,
             &processed_thought.branch_id,
         ) {
-            let branch = self.branches.entry(branch_id.clone()).or_insert_with(|| {
-                ThoughtBranch::new(branch_id.clone(), branch_from)
-            });
+            let branch = self
+                .branches
+                .entry(branch_id.clone())
+                .or_insert_with(|| ThoughtBranch::new(branch_id.clone(), branch_from));
             branch.add_thought(processed_thought.clone());
         }
-        
+
         // Update progress
         self.progress.update(&processed_thought);
-        
+
         // Update statistics
         let processing_time = start_time.elapsed();
         self.stats.total_thoughts += 1;
         self.stats.total_processing_time_ms += processing_time.as_millis() as u64;
-        self.stats.avg_processing_time_ms = 
+        self.stats.avg_processing_time_ms =
             self.stats.total_processing_time_ms as f64 / self.stats.total_thoughts as f64;
-        
+
         if processed_thought.is_revision() {
             self.stats.total_revisions += 1;
         }
         if processed_thought.is_branch() {
             self.stats.total_branches += 1;
         }
-        
+
         // Log the thought if logging is enabled
         if !self.disable_logging {
             self.log_thought(&processed_thought);
         }
-        
+
         Ok(processed_thought)
     }
 
@@ -458,7 +461,10 @@ impl ThinkingEngine {
         };
 
         let context = if thought.is_revision() {
-            format!(" (revising thought {})", thought.revises_thought.unwrap_or(0))
+            format!(
+                " (revising thought {})",
+                thought.revises_thought.unwrap_or(0)
+            )
         } else if thought.is_branch() {
             format!(
                 " (from thought {}, ID: {})",
@@ -469,18 +475,16 @@ impl ThinkingEngine {
             String::new()
         };
 
-        let header = format!("{} {}/{}", prefix, thought.thought_number, thought.total_thoughts);
+        let header = format!(
+            "{} {}/{}",
+            prefix, thought.thought_number, thought.total_thoughts
+        );
         let border_length = std::cmp::max(header.len() + context.len(), thought.thought.len()) + 4;
         let border = "─".repeat(border_length);
 
         eprintln!(
             "\n┌{}┐\n│ {}{} │\n├{}┤\n│ {} │\n└{}┘",
-            border,
-            header,
-            context,
-            border,
-            thought.thought,
-            border
+            border, header, context, border, thought.thought, border
         );
     }
 }
@@ -516,7 +520,8 @@ mod tests {
 
     #[test]
     fn test_branch_thought() {
-        let thought = ThoughtData::branch("Branch thought".to_string(), 4, 2, "branch-1".to_string());
+        let thought =
+            ThoughtData::branch("Branch thought".to_string(), 4, 2, "branch-1".to_string());
         assert!(thought.is_branch());
         assert_eq!(thought.get_branch_id(), Some("branch-1"));
         assert_eq!(thought.branch_from_thought, Some(2));
@@ -544,7 +549,7 @@ mod tests {
 
         let thought = ThoughtData::new("First thought".to_string(), 1, 3);
         let processed = engine.process_thought(thought).await.unwrap();
-        
+
         assert_eq!(processed.thought, "First thought");
         assert_eq!(engine.get_thoughts().len(), 1);
         assert!(!engine.is_complete());
@@ -563,4 +568,4 @@ mod tests {
         assert_eq!(progress.completed_thoughts, 2);
         assert_eq!(progress.progress_percentage, 0.4);
     }
-} 
+}

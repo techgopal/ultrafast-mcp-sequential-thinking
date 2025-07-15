@@ -120,85 +120,61 @@ cargo run --bin sequential-thinking-server -- --transport http --port 8080
 # Choose "sequential-thinking-server-http" for HTTP transport
 ```
 
-## 📖 Usage
+### Quick Start with Docker
 
-### Basic Sequential Thinking
+#### 1. Build the Docker Image
+```bash
+# Build the server image
+docker build -t sequential-thinking-server .
 
-```rust
-use ultrafast_mcp_sequential_thinking::{
-    SequentialThinkingClient, ThoughtData, ThinkingSession
-};
-
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    // Create client
-    let client = SequentialThinkingClient::new("http://localhost:8080").await?;
-    
-    // Start a thinking session
-    let mut session = client.start_session("Solve a complex problem").await?;
-    
-    // Add thoughts
-    session.add_thought(ThoughtData {
-        thought: "First, I need to understand the problem scope".to_string(),
-        thought_number: 1,
-        total_thoughts: 5,
-        next_thought_needed: true,
-        ..Default::default()
-    }).await?;
-    
-    // Continue thinking...
-    session.add_thought(ThoughtData {
-        thought: "I realize I need more analysis".to_string(),
-        thought_number: 2,
-        total_thoughts: 7, // Adjusted estimate
-        next_thought_needed: true,
-        ..Default::default()
-    }).await?;
-    
-    // Complete the session
-    session.complete().await?;
-    
-    Ok(())
-}
+# Verify the image was created
+docker images | grep sequential-thinking-server
 ```
 
-### Advanced Features
+#### 2. Run the Server with Docker
+```bash
+# Run HTTP server on port 8080
+docker run --rm -p 8080:8080 sequential-thinking-server
 
-#### Branching Logic
-```rust
-// Create a branch from thought 3
-session.add_thought(ThoughtData {
-    thought: "Alternative approach: consider different perspective".to_string(),
-    thought_number: 4,
-    total_thoughts: 8,
-    next_thought_needed: true,
-    branch_from_thought: Some(3),
-    branch_id: Some("alternative-approach".to_string()),
-    ..Default::default()
-}).await?;
+# Run with custom configuration
+docker run --rm -p 8080:8080 -e MAX_THOUGHTS=200 sequential-thinking-server
+
+# Run in detached mode
+docker run -d --name thinking-server -p 8080:8080 sequential-thinking-server
 ```
 
-#### Revision and Reflection
-```rust
-// Revise a previous thought
-session.add_thought(ThoughtData {
-    thought: "Actually, my earlier assumption was incorrect".to_string(),
-    thought_number: 5,
-    total_thoughts: 8,
-    next_thought_needed: true,
-    is_revision: Some(true),
-    revises_thought: Some(2),
-    ..Default::default()
-}).await?;
+#### 3. Connect Client to Docker Server
+```bash
+# Connect to HTTP server running in Docker
+cargo run --bin sequential-thinking-client -- --server http://localhost:8080
+
+# Or use curl to test the server
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"initialize","params":{"protocolVersion":"2025-06-18"},"id":1}'
 ```
 
-#### Progress Tracking
-```rust
-// Monitor progress
-let progress = session.get_progress().await?;
-println!("Progress: {}/{} thoughts completed", 
-         progress.completed_thoughts, 
-         progress.total_thoughts);
+#### 4. Docker Compose (Optional)
+```bash
+# Create docker-compose.yml for easy deployment
+cat > docker-compose.yml << EOF
+version: '3.8'
+services:
+  sequential-thinking-server:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - MAX_THOUGHTS=100
+      - ENABLE_ANALYTICS=true
+    restart: unless-stopped
+EOF
+
+# Start with Docker Compose
+docker-compose up -d
+
+# Stop the service
+docker-compose down
 ```
 
 ## 🔧 Configuration

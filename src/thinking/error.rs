@@ -397,7 +397,10 @@ mod tests {
     #[test]
     fn test_error_creation() {
         let error = SequentialThinkingError::invalid_thought_data("Empty thought");
-        assert!(matches!(error, SequentialThinkingError::InvalidThoughtData { .. }));
+        assert!(matches!(
+            error,
+            SequentialThinkingError::InvalidThoughtData { .. }
+        ));
         assert!(error.is_client_error());
         assert!(!error.is_retryable());
     }
@@ -421,7 +424,7 @@ mod tests {
         let context = ErrorContext::new("test_operation")
             .with_context("user_id", "123")
             .with_context("session_id", "abc");
-        
+
         assert_eq!(context.operation, "test_operation");
         assert_eq!(context.context.get("user_id"), Some(&"123".to_string()));
         assert_eq!(context.context.get("session_id"), Some(&"abc".to_string()));
@@ -431,10 +434,16 @@ mod tests {
     fn test_from_implementations() {
         let io_error = std::io::Error::new(std::io::ErrorKind::NotFound, "File not found");
         let mcp_error: SequentialThinkingError = io_error.into();
-        assert!(matches!(mcp_error, SequentialThinkingError::TransportError { .. }));
+        assert!(matches!(
+            mcp_error,
+            SequentialThinkingError::TransportError { .. }
+        ));
 
         let json_error = serde_json::from_str::<serde_json::Value>("invalid json").unwrap_err();
         let mcp_error: SequentialThinkingError = json_error.into();
-        assert!(matches!(mcp_error, SequentialThinkingError::SerializationError { .. }));
+        assert!(matches!(
+            mcp_error,
+            SequentialThinkingError::SerializationError { .. }
+        ));
     }
-} 
+}

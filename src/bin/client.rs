@@ -10,10 +10,10 @@ use std::path::PathBuf;
 use tracing::{error, info, warn};
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
-use ultrafast_mcp::{UltraFastClient, ClientInfo, ClientCapabilities};
+use ultrafast_mcp::{ClientCapabilities, ClientInfo, UltraFastClient};
 use ultrafast_mcp_sequential_thinking::{
-    default_client_config, SequentialThinkingClient, ClientConfig, ThoughtData,
-    thinking::client::ClientThinkingConfig,
+    default_client_config, thinking::client::ClientThinkingConfig, ClientConfig,
+    SequentialThinkingClient, ThoughtData,
 };
 
 /// Command-line arguments for the sequential thinking client
@@ -143,16 +143,19 @@ impl ClientApp {
         Self::override_config(&mut config, args);
 
         // Create client (connection and initialization handled internally)
-        let client = SequentialThinkingClient::with_config(&args.server, config.thinking.clone()).await
+        let client = SequentialThinkingClient::with_config(&args.server, config.thinking.clone())
+            .await
             .map_err(|e| format!("Failed to create client: {}", e))?;
 
         Ok(Self { config, client })
     }
 
     /// Load configuration from file
-    fn load_config_from_file(path: &PathBuf) -> Result<ultrafast_mcp_sequential_thinking::ClientConfig, Box<dyn std::error::Error>> {
+    fn load_config_from_file(
+        path: &PathBuf,
+    ) -> Result<ultrafast_mcp_sequential_thinking::ClientConfig, Box<dyn std::error::Error>> {
         let content = std::fs::read_to_string(path)?;
-        
+
         if path.extension().and_then(|s| s.to_str()) == Some("toml") {
             let config: toml::Value = toml::from_str(&content)?;
             if let Some(client) = config.get("client") {
@@ -177,23 +180,23 @@ impl ClientApp {
         if !args.server.is_empty() {
             config.server_url = args.server.clone();
         }
-        
+
         if args.timeout != 0 {
             config.timeout_seconds = args.timeout;
         }
-        
+
         if args.retries != 0 {
             config.retry_attempts = args.retries;
         }
-        
+
         if args.disable_progress {
             config.thinking.enable_progress_tracking = false;
         }
-        
+
         if args.disable_visualization {
             config.thinking.show_thought_visualization = false;
         }
-        
+
         if args.auto_save != 0 {
             config.thinking.auto_save_interval = args.auto_save;
         }
@@ -202,8 +205,8 @@ impl ClientApp {
     /// Initialize logging
     fn init_logging(args: &Args) -> Result<(), Box<dyn std::error::Error>> {
         // Set up logging
-        let env_filter = EnvFilter::try_from_default_env()
-            .unwrap_or_else(|_| EnvFilter::new(&args.log_level));
+        let env_filter =
+            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(&args.log_level));
 
         let mut builder = tracing_subscriber::fmt()
             .with_env_filter(env_filter)
@@ -223,11 +226,17 @@ impl ClientApp {
     }
 
     /// Start interactive session
-    async fn interactive_session(&self, title: Option<String>) -> Result<(), Box<dyn std::error::Error>> {
+    async fn interactive_session(
+        &self,
+        title: Option<String>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let session_title = title.unwrap_or_else(|| "Interactive Session".to_string());
         info!("Starting interactive thinking session: {}", session_title);
 
-        let session = self.client.start_session(session_title).await
+        let session = self
+            .client
+            .start_session(session_title)
+            .await
             .map_err(|e| format!("Failed to start session: {}", e))?;
 
         println!("🎯 Interactive Thinking Session Started");
@@ -269,8 +278,12 @@ impl ClientApp {
                         continue;
                     }
                     let content = parts[1];
-                    
-                    let thought = ultrafast_mcp_sequential_thinking::ThoughtData::new(content.to_string(), thought_number, total_thoughts);
+
+                    let thought = ultrafast_mcp_sequential_thinking::ThoughtData::new(
+                        content.to_string(),
+                        thought_number,
+                        total_thoughts,
+                    );
                     match self.client.add_thought(&session.session_id, thought).await {
                         Ok(processed) => {
                             println!("✅ Thought {} processed", processed.thought_number);
@@ -291,13 +304,17 @@ impl ClientApp {
                     }
                     let number = parts[1].parse::<u32>().unwrap_or(0);
                     let content = parts[2];
-                    
+
                     if number == 0 || number >= thought_number {
                         println!("❌ Invalid thought number");
                         continue;
                     }
-                    
-                    let thought = ultrafast_mcp_sequential_thinking::ThoughtData::revision(content.to_string(), thought_number, number);
+
+                    let thought = ultrafast_mcp_sequential_thinking::ThoughtData::revision(
+                        content.to_string(),
+                        thought_number,
+                        number,
+                    );
                     match self.client.add_thought(&session.session_id, thought).await {
                         Ok(processed) => {
                             println!("✅ Revision {} processed", processed.thought_number);
@@ -316,12 +333,12 @@ impl ClientApp {
                     let from = parts[1].parse::<u32>().unwrap_or(0);
                     let branch_id = parts[2];
                     let content = parts[3];
-                    
+
                     if from == 0 || from >= thought_number {
                         println!("❌ Invalid branch from number");
                         continue;
                     }
-                    
+
                     let thought = ultrafast_mcp_sequential_thinking::ThoughtData::branch(
                         content.to_string(),
                         thought_number,
@@ -340,10 +357,12 @@ impl ClientApp {
                 }
                 "progress" => {
                     if let Some(progress) = self.client.get_progress().await {
-                        println!("📊 Progress: {}/{} ({:.1}%)", 
-                                progress.completed_thoughts, 
-                                progress.total_thoughts,
-                                progress.progress_percentage * 100.0);
+                        println!(
+                            "📊 Progress: {}/{} ({:.1}%)",
+                            progress.completed_thoughts,
+                            progress.total_thoughts,
+                            progress.progress_percentage * 100.0
+                        );
                     } else {
                         println!("📊 No progress information available");
                     }
@@ -354,13 +373,20 @@ impl ClientApp {
                     println!("  Total requests: {}", stats.total_requests);
                     println!("  Total thoughts: {}", stats.total_thoughts);
                     println!("  Total sessions: {}", stats.total_sessions);
-                    println!("  Average response time: {:.2}ms", stats.avg_response_time_ms);
+                    println!(
+                        "  Average response time: {:.2}ms",
+                        stats.avg_response_time_ms
+                    );
                     println!("  Error count: {}", stats.error_count);
                     println!("  Retry count: {}", stats.retry_count);
                 }
                 "export" => {
                     let format = if parts.len() > 1 { parts[1] } else { "json" };
-                    match self.client.export_session(&session.session_id, format).await {
+                    match self
+                        .client
+                        .export_session(&session.session_id, format)
+                        .await
+                    {
                         Ok(content) => {
                             println!("📄 Session exported in {} format:", format);
                             println!("{}", content);
@@ -385,7 +411,10 @@ impl ClientApp {
                     println!("  quit - End session");
                 }
                 _ => {
-                    println!("❌ Unknown command: {}. Type 'help' for available commands.", command);
+                    println!(
+                        "❌ Unknown command: {}. Type 'help' for available commands.",
+                        command
+                    );
                 }
             }
         }
@@ -394,9 +423,18 @@ impl ClientApp {
     }
 
     /// Process a single thought
-    async fn process_thought(&self, thought: String, number: u32, total: u32, more_needed: bool) -> Result<(), Box<dyn std::error::Error>> {
+    async fn process_thought(
+        &self,
+        thought: String,
+        number: u32,
+        total: u32,
+        more_needed: bool,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let session_title = "Single Thought Session".to_string();
-        let session = self.client.start_session(session_title).await
+        let session = self
+            .client
+            .start_session(session_title)
+            .await
             .map_err(|e| format!("Failed to start session: {}", e))?;
 
         let thought_data = ultrafast_mcp_sequential_thinking::ThoughtData {
@@ -407,10 +445,17 @@ impl ClientApp {
             ..Default::default()
         };
 
-        match self.client.add_thought(&session.session_id, thought_data).await {
+        match self
+            .client
+            .add_thought(&session.session_id, thought_data)
+            .await
+        {
             Ok(processed) => {
                 println!("✅ Thought processed successfully");
-                println!("Thought Number: {}/{}", processed.thought_number, processed.total_thoughts);
+                println!(
+                    "Thought Number: {}/{}",
+                    processed.thought_number, processed.total_thoughts
+                );
                 println!("Content: {}", processed.thought);
                 println!("More thoughts needed: {}", processed.next_thought_needed);
             }
@@ -423,7 +468,12 @@ impl ClientApp {
     }
 
     /// Export a session
-    async fn export_session(&self, session_id: &str, format: &str, output: Option<PathBuf>) -> Result<(), Box<dyn std::error::Error>> {
+    async fn export_session(
+        &self,
+        session_id: &str,
+        format: &str,
+        output: Option<PathBuf>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         match self.client.export_session(session_id, format).await {
             Ok(content) => {
                 if let Some(output_path) = output {
@@ -483,17 +533,32 @@ impl ClientApp {
         println!("Retry attempts: {}", self.config.retry_attempts);
         println!();
         println!("Configuration:");
-        println!("  Progress tracking: {}", self.config.thinking.enable_progress_tracking);
-        println!("  Thought visualization: {}", self.config.thinking.show_thought_visualization);
-        println!("  Auto-save interval: {} seconds", self.config.thinking.auto_save_interval);
-        println!("  Max retry attempts: {}", self.config.thinking.max_retry_attempts);
-        println!("  Operation timeout: {} seconds", self.config.thinking.operation_timeout);
+        println!(
+            "  Progress tracking: {}",
+            self.config.thinking.enable_progress_tracking
+        );
+        println!(
+            "  Thought visualization: {}",
+            self.config.thinking.show_thought_visualization
+        );
+        println!(
+            "  Auto-save interval: {} seconds",
+            self.config.thinking.auto_save_interval
+        );
+        println!(
+            "  Max retry attempts: {}",
+            self.config.thinking.max_retry_attempts
+        );
+        println!(
+            "  Operation timeout: {} seconds",
+            self.config.thinking.operation_timeout
+        );
     }
 
     /// Test connection
     async fn test_connection(&self) -> Result<(), Box<dyn std::error::Error>> {
         println!("🔍 Testing connection to server...");
-        
+
         match self.client.list_tools().await {
             Ok(tools) => {
                 println!("✅ Connection successful!");
@@ -514,15 +579,18 @@ impl ClientApp {
     fn generate_config(output_path: &PathBuf) -> Result<(), Box<dyn std::error::Error>> {
         let config = ultrafast_mcp_sequential_thinking::default_client_config();
         let config_json = serde_json::to_string_pretty(&config)?;
-        
+
         // Ensure output directory exists
         if let Some(parent) = output_path.parent() {
             std::fs::create_dir_all(parent)?;
         }
-        
+
         std::fs::write(output_path, config_json)?;
-        info!("Generated default configuration at: {}", output_path.display());
-        
+        info!(
+            "Generated default configuration at: {}",
+            output_path.display()
+        );
+
         Ok(())
     }
 }
@@ -542,21 +610,32 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let app = ClientApp::new(&args).await?;
                 app.interactive_session(title.clone()).await
             }
-            Commands::Think { thought, number, total, more_needed } => {
+            Commands::Think {
+                thought,
+                number,
+                total,
+                more_needed,
+            } => {
                 // Initialize logging
                 ClientApp::init_logging(&args)?;
 
                 // Create client and process thought
                 let app = ClientApp::new(&args).await?;
-                app.process_thought(thought.to_string(), *number, *total, *more_needed).await
+                app.process_thought(thought.to_string(), *number, *total, *more_needed)
+                    .await
             }
-            Commands::Export { session_id, format, output } => {
+            Commands::Export {
+                session_id,
+                format,
+                output,
+            } => {
                 // Initialize logging
                 ClientApp::init_logging(&args)?;
 
                 // Create client and export session
                 let app = ClientApp::new(&args).await?;
-                app.export_session(&session_id, &format, output.clone()).await
+                app.export_session(&session_id, &format, output.clone())
+                    .await
             }
             Commands::Analyze { session_id } => {
                 // Initialize logging
@@ -587,9 +666,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let app = ClientApp::new(&args).await?;
                 app.test_connection().await
             }
-            Commands::Generate { output } => {
-                ClientApp::generate_config(&output)
-            }
+            Commands::Generate { output } => ClientApp::generate_config(&output),
         }
     } else {
         // No subcommand provided, show help
@@ -598,8 +675,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!();
         println!("Example usage:");
         println!("  {} interactive", env!("CARGO_BIN_NAME"));
-        println!("  {} think \"This is my first thought\"", env!("CARGO_BIN_NAME"));
-        println!("  {} export <session-id> --format json", env!("CARGO_BIN_NAME"));
+        println!(
+            "  {} think \"This is my first thought\"",
+            env!("CARGO_BIN_NAME")
+        );
+        println!(
+            "  {} export <session-id> --format json",
+            env!("CARGO_BIN_NAME")
+        );
         Ok(())
     }
-} 
+}
