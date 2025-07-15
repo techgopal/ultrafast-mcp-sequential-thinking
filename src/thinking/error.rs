@@ -390,14 +390,6 @@ impl From<chrono::ParseError> for SequentialThinkingError {
     }
 }
 
-impl From<regex::Error> for SequentialThinkingError {
-    fn from(err: regex::Error) -> Self {
-        Self::ValidationError {
-            message: err.to_string(),
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

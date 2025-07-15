@@ -262,7 +262,7 @@ impl ServerApp {
             }
             "http" => {
                 info!("Running server with HTTP transport on port {}", self.config.port);
-                mcp_server.run_streamable_http("127.0.0.1", self.config.port).await?;
+                mcp_server.run_streamable_http("0.0.0.0", self.config.port).await?;
             }
             _ => {
                 return Err(format!("Unsupported transport: {}", self.config.transport).into());

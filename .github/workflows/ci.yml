@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+    tags: ["v*"]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  rust-ci:
+    name: Rust Standard CI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+        working-directory: ./ultrafast-mcp-sequential-thinking
+      - name: Lint with clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+        working-directory: ./ultrafast-mcp-sequential-thinking
+      - name: Build
+        run: cargo build --workspace --all-targets --release
+        working-directory: ./ultrafast-mcp-sequential-thinking
+      - name: Test
+        run: cargo test --workspace --all-targets
+        working-directory: ./ultrafast-mcp-sequential-thinking
+
+  docker-release:
+    needs: rust-ci
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Extract git commit SHA
+        id: vars
+        run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./ultrafast-mcp-sequential-thinking
+          file: ./ultrafast-mcp-sequential-thinking/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/ultrafast-mcp-sequential-thinking:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/ultrafast-mcp-sequential-thinking:${{ steps.vars.outputs.sha }}
+
+  publish:
+    name: Publish to GitHub Packages and crates.io
+    needs: rust-ci
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    env:
+      CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: Publish to GitHub Packages (ghcr.io)
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cargo publish --manifest-path ultrafast-mcp-sequential-thinking/Cargo.toml --registry github
+      - name: Publish to crates.io (optional)
+        if: env.CRATES_IO_TOKEN != null && env.CRATES_IO_TOKEN != ''
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ env.CRATES_IO_TOKEN }}
+        run: |
+          cargo publish --manifest-path ultrafast-mcp-sequential-thinking/Cargo.toml
+
+# To enable publishing:
+# - Set up the 'GITHUB_TOKEN' secret (automatically available in GitHub Actions)
+# - For crates.io, add a 'CRATES_IO_TOKEN' secret with your crates.io API token
+# - Ensure your Cargo.toml has the appropriate [package] and [registry] sections for GitHub Packages 
