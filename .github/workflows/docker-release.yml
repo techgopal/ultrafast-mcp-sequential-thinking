@@ -23,7 +23,7 @@ jobs:
       - name: Extract version from Cargo.toml
         id: version
         run: |
-          version=$(grep '^version' ultrafast-mcp-sequential-thinking/Cargo.toml | head -1 | cut -d '"' -f2)
+          version=$(grep '^version' Cargo.toml | head -1 | cut -d '"' -f2)
           echo "version=$version" >> $GITHUB_OUTPUT
         shell: bash
       - name: Fail if version is empty
