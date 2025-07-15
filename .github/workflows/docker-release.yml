@@ -19,11 +19,20 @@ jobs:
       - name: Extract git commit SHA
         id: vars
         run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+        shell: bash
       - name: Extract version from Cargo.toml
         id: version
         run: |
           version=$(grep '^version' ultrafast-mcp-sequential-thinking/Cargo.toml | head -1 | cut -d '"' -f2)
           echo "version=$version" >> $GITHUB_OUTPUT
+        shell: bash
+      - name: Fail if version is empty
+        run: |
+          if [ -z "${{ steps.version.outputs.version }}" ]; then
+            echo "Version is empty! Check Cargo.toml."
+            exit 1
+          fi
+        shell: bash
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
