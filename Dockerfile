@@ -1,5 +1,5 @@
 # ---- Build Stage ----
-FROM --platform=$BUILDPLATFORM rust:1.88.0 as builder
+FROM --platform=$BUILDPLATFORM rust:1.88.0 AS builder
 WORKDIR /app
 
 # Install cross-compilation tools for multi-platform builds
@@ -33,18 +33,26 @@ RUN if [ "$TARGETARCH" = "arm64" ]; then \
         rustup target add armv7-unknown-linux-gnueabihf; \
     fi
 
-# Build the application
-RUN if [ "$TARGETARCH" = "amd64" ]; then \
-        cargo build --release --bin sequential-thinking-server; \
-    elif [ "$TARGETARCH" = "arm64" ]; then \
-        CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc \
-        CXX_aarch64_unknown_linux_gnu=aarch64-linux-gnu-g++ \
-        cargo build --release --bin sequential-thinking-server --target aarch64-unknown-linux-gnu; \
-    elif [ "$TARGETARCH" = "arm" ]; then \
-        cargo build --release --bin sequential-thinking-server --target armv7-unknown-linux-gnueabihf; \
-    fi
+# Build the application - use a script to handle the build logic
+RUN echo '#!/bin/bash' > /tmp/build.sh && \
+    echo 'set -e' >> /tmp/build.sh && \
+    echo 'if [ "$TARGETARCH" = "amd64" ]; then' >> /tmp/build.sh && \
+    echo '    echo "Building for amd64..."' >> /tmp/build.sh && \
+    echo '    cargo build --release --bin sequential-thinking-server' >> /tmp/build.sh && \
+    echo 'elif [ "$TARGETARCH" = "arm64" ]; then' >> /tmp/build.sh && \
+    echo '    echo "Building for arm64..."' >> /tmp/build.sh && \
+    echo '    CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc CXX_aarch64_unknown_linux_gnu=aarch64-linux-gnu-g++ cargo build --release --bin sequential-thinking-server --target aarch64-unknown-linux-gnu' >> /tmp/build.sh && \
+    echo 'elif [ "$TARGETARCH" = "arm" ]; then' >> /tmp/build.sh && \
+    echo '    echo "Building for arm..."' >> /tmp/build.sh && \
+    echo '    cargo build --release --bin sequential-thinking-server --target armv7-unknown-linux-gnueabihf' >> /tmp/build.sh && \
+    echo 'else' >> /tmp/build.sh && \
+    echo '    echo "Unsupported architecture: $TARGETARCH"' >> /tmp/build.sh && \
+    echo '    exit 1' >> /tmp/build.sh && \
+    echo 'fi' >> /tmp/build.sh && \
+    chmod +x /tmp/build.sh && \
+    /tmp/build.sh
 
-# Determine the correct binary path based on target architecture
+# Copy the binary to a standard location
 RUN if [ "$TARGETARCH" = "amd64" ]; then \
         cp /app/target/release/sequential-thinking-server /app/sequential-thinking-server; \
     elif [ "$TARGETARCH" = "arm64" ]; then \
