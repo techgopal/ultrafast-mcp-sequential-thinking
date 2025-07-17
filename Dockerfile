@@ -2,10 +2,12 @@
 FROM --platform=$BUILDPLATFORM rust:1.88.0 AS builder
 WORKDIR /app
 
-# Install cross-compilation tools for multi-platform builds
+# Install cross-compilation tools and OpenSSL development libraries
 RUN apt-get update && apt-get install -y \
     gcc-aarch64-linux-gnu \
     g++-aarch64-linux-gnu \
+    libssl-dev \
+    pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy Cargo files first for better caching
@@ -33,24 +35,27 @@ RUN if [ "$TARGETARCH" = "arm64" ]; then \
         rustup target add armv7-unknown-linux-gnueabihf; \
     fi
 
-# Build the application - use a script to handle the build logic
-RUN echo '#!/bin/bash' > /tmp/build.sh && \
-    echo 'set -e' >> /tmp/build.sh && \
-    echo 'if [ "$TARGETARCH" = "amd64" ]; then' >> /tmp/build.sh && \
-    echo '    echo "Building for amd64..."' >> /tmp/build.sh && \
-    echo '    cargo build --release --bin sequential-thinking-server' >> /tmp/build.sh && \
-    echo 'elif [ "$TARGETARCH" = "arm64" ]; then' >> /tmp/build.sh && \
-    echo '    echo "Building for arm64..."' >> /tmp/build.sh && \
-    echo '    CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc CXX_aarch64_unknown_linux_gnu=aarch64-linux-gnu-g++ cargo build --release --bin sequential-thinking-server --target aarch64-unknown-linux-gnu' >> /tmp/build.sh && \
-    echo 'elif [ "$TARGETARCH" = "arm" ]; then' >> /tmp/build.sh && \
-    echo '    echo "Building for arm..."' >> /tmp/build.sh && \
-    echo '    cargo build --release --bin sequential-thinking-server --target armv7-unknown-linux-gnueabihf' >> /tmp/build.sh && \
-    echo 'else' >> /tmp/build.sh && \
-    echo '    echo "Unsupported architecture: $TARGETARCH"' >> /tmp/build.sh && \
-    echo '    exit 1' >> /tmp/build.sh && \
-    echo 'fi' >> /tmp/build.sh && \
-    chmod +x /tmp/build.sh && \
-    /tmp/build.sh
+# Build the application with proper OpenSSL configuration
+RUN if [ "$TARGETARCH" = "amd64" ]; then \
+        echo "Building for amd64..."; \
+        cargo build --release --bin sequential-thinking-server; \
+    elif [ "$TARGETARCH" = "arm64" ]; then \
+        echo "Building for arm64..."; \
+        export CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc; \
+        export CXX_aarch64_unknown_linux_gnu=aarch64-linux-gnu-g++; \
+        export PKG_CONFIG_ALLOW_CROSS=1; \
+        export OPENSSL_DIR=/usr; \
+        export OPENSSL_LIB_DIR=/usr/lib/x86_64-linux-gnu; \
+        export OPENSSL_INCLUDE_DIR=/usr/include; \
+        cargo build --release --bin sequential-thinking-server --target aarch64-unknown-linux-gnu; \
+    elif [ "$TARGETARCH" = "arm" ]; then \
+        echo "Building for arm..."; \
+        export PKG_CONFIG_ALLOW_CROSS=1; \
+        export OPENSSL_DIR=/usr; \
+        export OPENSSL_LIB_DIR=/usr/lib/x86_64-linux-gnu; \
+        export OPENSSL_INCLUDE_DIR=/usr/include; \
+        cargo build --release --bin sequential-thinking-server --target armv7-unknown-linux-gnueabihf; \
+    fi
 
 # Copy the binary to a standard location
 RUN if [ "$TARGETARCH" = "amd64" ]; then \
