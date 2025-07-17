@@ -6,6 +6,8 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     gcc-aarch64-linux-gnu \
     g++-aarch64-linux-gnu \
+    gcc-arm-linux-gnueabihf \
+    g++-arm-linux-gnueabihf \
     libssl-dev \
     pkg-config \
     && rm -rf /var/lib/apt/lists/*
@@ -44,16 +46,14 @@ RUN if [ "$TARGETARCH" = "amd64" ]; then \
         export CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc; \
         export CXX_aarch64_unknown_linux_gnu=aarch64-linux-gnu-g++; \
         export PKG_CONFIG_ALLOW_CROSS=1; \
-        export OPENSSL_DIR=/usr; \
-        export OPENSSL_LIB_DIR=/usr/lib/x86_64-linux-gnu; \
-        export OPENSSL_INCLUDE_DIR=/usr/include; \
+        export OPENSSL_STATIC=1; \
         cargo build --release --bin sequential-thinking-server --target aarch64-unknown-linux-gnu; \
     elif [ "$TARGETARCH" = "arm" ]; then \
         echo "Building for arm..."; \
+        export CC_armv7_unknown_linux_gnueabihf=arm-linux-gnueabihf-gcc; \
+        export CXX_armv7_unknown_linux_gnueabihf=arm-linux-gnueabihf-g++; \
         export PKG_CONFIG_ALLOW_CROSS=1; \
-        export OPENSSL_DIR=/usr; \
-        export OPENSSL_LIB_DIR=/usr/lib/x86_64-linux-gnu; \
-        export OPENSSL_INCLUDE_DIR=/usr/include; \
+        export OPENSSL_STATIC=1; \
         cargo build --release --bin sequential-thinking-server --target armv7-unknown-linux-gnueabihf; \
     fi
 
