@@ -45,9 +45,6 @@ tests/
 Dockerfile*
 .dockerignore
 
-# Cargo
-Cargo.lock
-
 # Temporary files
 *.tmp
 *.temp

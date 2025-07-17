@@ -27,10 +27,14 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       
-      - name: Generate Cargo.lock if missing
+      - name: Ensure Cargo.lock exists
         run: |
           if [ ! -f Cargo.lock ]; then
+            echo "Cargo.lock not found, generating..."
             cargo generate-lockfile
+          else
+            echo "Cargo.lock found, verifying..."
+            ls -la Cargo.lock
           fi
       
       - name: Extract git commit SHA

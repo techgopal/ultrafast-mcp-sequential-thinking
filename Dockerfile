@@ -8,11 +8,17 @@ RUN apt-get update && apt-get install -y \
     g++-aarch64-linux-gnu \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy only the necessary files for building the crate
-COPY Cargo.toml ./
-COPY Cargo.lock ./
+# Copy Cargo files first for better caching
+COPY Cargo.toml Cargo.lock ./
+
+# Create a dummy main.rs to build dependencies
+RUN mkdir src && \
+    echo "fn main() {}" > src/main.rs && \
+    cargo build --release --bin sequential-thinking-server && \
+    rm -rf src
+
+# Copy the actual source code
 COPY src ./src
-COPY README.md ./
 
 # Build for the target platform
 ARG TARGETPLATFORM
