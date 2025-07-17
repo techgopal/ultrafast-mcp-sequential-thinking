@@ -26,52 +26,32 @@ ARG BUILDPLATFORM
 ARG TARGETOS
 ARG TARGETARCH
 
-# Set up cross-compilation targets
-RUN case "$TARGETARCH" in \
-        amd64) \
-            echo "Building for x86_64-unknown-linux-gnu" \
-            ;; \
-        arm64) \
-            rustup target add aarch64-unknown-linux-gnu \
-            echo "Building for aarch64-unknown-linux-gnu" \
-            ;; \
-        arm) \
-            rustup target add armv7-unknown-linux-gnueabihf \
-            echo "Building for armv7-unknown-linux-gnueabihf" \
-            ;; \
-        *) \
-            echo "Unsupported architecture: $TARGETARCH" \
-            exit 1 \
-            ;; \
-    esac
+# Set up cross-compilation targets based on architecture
+RUN if [ "$TARGETARCH" = "arm64" ]; then \
+        rustup target add aarch64-unknown-linux-gnu; \
+    elif [ "$TARGETARCH" = "arm" ]; then \
+        rustup target add armv7-unknown-linux-gnueabihf; \
+    fi
 
 # Build the application
-RUN case "$TARGETARCH" in \
-        amd64) \
-            cargo build --release --bin sequential-thinking-server \
-            ;; \
-        arm64) \
-            CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc \
-            CXX_aarch64_unknown_linux_gnu=aarch64-linux-gnu-g++ \
-            cargo build --release --bin sequential-thinking-server --target aarch64-unknown-linux-gnu \
-            ;; \
-        arm) \
-            cargo build --release --bin sequential-thinking-server --target armv7-unknown-linux-gnueabihf \
-            ;; \
-    esac
+RUN if [ "$TARGETARCH" = "amd64" ]; then \
+        cargo build --release --bin sequential-thinking-server; \
+    elif [ "$TARGETARCH" = "arm64" ]; then \
+        CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc \
+        CXX_aarch64_unknown_linux_gnu=aarch64-linux-gnu-g++ \
+        cargo build --release --bin sequential-thinking-server --target aarch64-unknown-linux-gnu; \
+    elif [ "$TARGETARCH" = "arm" ]; then \
+        cargo build --release --bin sequential-thinking-server --target armv7-unknown-linux-gnueabihf; \
+    fi
 
 # Determine the correct binary path based on target architecture
-RUN case "$TARGETARCH" in \
-        amd64) \
-            cp /app/target/release/sequential-thinking-server /app/sequential-thinking-server \
-            ;; \
-        arm64) \
-            cp /app/target/aarch64-unknown-linux-gnu/release/sequential-thinking-server /app/sequential-thinking-server \
-            ;; \
-        arm) \
-            cp /app/target/armv7-unknown-linux-gnueabihf/release/sequential-thinking-server /app/sequential-thinking-server \
-            ;; \
-    esac
+RUN if [ "$TARGETARCH" = "amd64" ]; then \
+        cp /app/target/release/sequential-thinking-server /app/sequential-thinking-server; \
+    elif [ "$TARGETARCH" = "arm64" ]; then \
+        cp /app/target/aarch64-unknown-linux-gnu/release/sequential-thinking-server /app/sequential-thinking-server; \
+    elif [ "$TARGETARCH" = "arm" ]; then \
+        cp /app/target/armv7-unknown-linux-gnueabihf/release/sequential-thinking-server /app/sequential-thinking-server; \
+    fi
 
 # ---- Runtime Stage ----
 FROM debian:bookworm-slim
