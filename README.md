@@ -217,6 +217,90 @@ docker-compose up -d
 docker-compose down
 ```
 
+### Multi-Platform Docker Support
+
+The Docker image supports multiple platforms for maximum compatibility:
+
+#### Supported Platforms
+- **linux/amd64**: Intel/AMD 64-bit processors
+- **linux/arm64**: ARM 64-bit processors (Apple Silicon, ARM servers)
+- **linux/arm/v7**: ARM 32-bit processors (Raspberry Pi, older ARM devices)
+
+#### Platform-Specific Usage
+
+```bash
+# Pull for specific platform
+docker pull --platform linux/amd64 techgopal/ultrafast-mcp-sequential-thinking:latest
+docker pull --platform linux/arm64 techgopal/ultrafast-mcp-sequential-thinking:latest
+docker pull --platform linux/arm/v7 techgopal/ultrafast-mcp-sequential-thinking:latest
+
+# Run on specific platform
+docker run --platform linux/amd64 --rm -p 8080:8080 techgopal/ultrafast-mcp-sequential-thinking:latest
+docker run --platform linux/arm64 --rm -p 8080:8080 techgopal/ultrafast-mcp-sequential-thinking:latest
+docker run --platform linux/arm/v7 --rm -p 8080:8080 techgopal/ultrafast-mcp-sequential-thinking:latest
+```
+
+#### Build Multi-Platform Images Locally
+
+```bash
+# Set up Docker Buildx for multi-platform builds
+docker buildx create --name multiplatform --use
+
+# Build for all supported platforms
+docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 \
+  -t your-username/ultrafast-mcp-sequential-thinking:latest \
+  --push .
+
+# Build for specific platform only
+docker buildx build --platform linux/arm64 \
+  -t your-username/ultrafast-mcp-sequential-thinking:arm64 \
+  --push .
+```
+
+#### Docker Compose with Platform Specification
+
+```yaml
+# docker-compose.yml
+version: '3.8'
+services:
+  sequential-thinking:
+    image: techgopal/ultrafast-mcp-sequential-thinking:latest
+    platform: linux/arm64  # Specify platform for ARM64
+    ports:
+      - "8080:8080"
+    environment:
+      - MAX_THOUGHTS=200
+      - ENABLE_ANALYTICS=true
+    restart: unless-stopped
+```
+
+#### CI/CD Multi-Platform Pipeline
+
+The project includes GitHub Actions workflows that automatically build and push multi-platform images:
+
+- **Docker Test**: Builds and tests images on pull requests
+- **Docker Release**: Builds and pushes multi-platform images on main branch
+- **Caching**: Uses GitHub Actions cache for faster builds
+- **Provenance**: Disabled for better compatibility
+
+#### Build Scripts
+
+The project includes convenient scripts for building and testing multi-platform images:
+
+```bash
+# Build multi-platform images locally
+./scripts/build-multi-platform.sh --push
+
+# Test multi-platform images
+./scripts/test-multi-platform.sh
+
+# Build for specific platforms only
+./scripts/build-multi-platform.sh -p linux/amd64,linux/arm64 --push
+
+# Test with custom image and port
+./scripts/test-multi-platform.sh -i my-image -t v1.0.0 -p 9090
+```
+
 ## 🔧 Configuration
 
 ### MCP Inspector

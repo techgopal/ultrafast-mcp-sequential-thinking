@@ -1,4 +1,54 @@
-target
-.git
+# Build artifacts
+target/
+**/target/
+
+# Git
+.git/
+.gitignore
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
 .DS_Store
-*.log 
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Test files
+tests/
+**/tests/
+*.test.rs
+*_test.rs
+
+# CI/CD
+.github/
+.github/workflows/
+
+# Docker
+Dockerfile*
+.dockerignore
+
+# Cargo
+Cargo.lock
+
+# Temporary files
+*.tmp
+*.temp
+.cache/ 
