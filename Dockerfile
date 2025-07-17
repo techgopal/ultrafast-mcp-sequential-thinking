@@ -11,9 +11,9 @@ RUN apt-get update && apt-get install -y \
 # Copy Cargo files first for better caching
 COPY Cargo.toml Cargo.lock ./
 
-# Create a dummy main.rs to build dependencies
-RUN mkdir src && \
-    echo "fn main() {}" > src/main.rs && \
+# Create a dummy binary file to build dependencies
+RUN mkdir -p src/bin && \
+    echo "fn main() {}" > src/bin/server.rs && \
     cargo build --release --bin sequential-thinking-server && \
     rm -rf src
 
