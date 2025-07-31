@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "sequential-thinking": {
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-i",
+        "--platform",
+        "linux/arm64",
+        "techgopal/ultrafast-mcp-sequential-thinking:latest",
+        "/usr/local/bin/sequential-thinking-server",
+        "--transport",
+        "stdio",
+        "--max-thoughts",
+        "200",
+        "--enable-analytics"
+      ],
+      "env": {}
+    }
+  }
+}

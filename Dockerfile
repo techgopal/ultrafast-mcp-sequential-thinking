@@ -1,5 +1,5 @@
 # ---- Build Stage ----
-FROM --platform=$BUILDPLATFORM rust:1.88.0 AS builder
+FROM rust:1.88.0 AS builder
 WORKDIR /app
 
 # Install build dependencies
